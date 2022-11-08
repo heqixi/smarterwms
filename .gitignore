@@ -1,14 +1,12 @@
-node_modules/
 
 __pycache__/
-
-stats_log/*
+.pytest_cache/*
 
 */migrations/*
 !*/migrations/__init__.py
 
 */logs/*
-
+*/stats_log/*
 
 media/
 
@@ -22,4 +20,6 @@ delete.py
 venv/
 logs/
 
-templates/dist/
+
+front/templates/dist/
+front/node_modules/
