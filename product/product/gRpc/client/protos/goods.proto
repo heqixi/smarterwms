@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package goods;
+
+import "google/protobuf/empty.proto";
+
+service GoodsController {
+    rpc List(GoodsListRequest) returns (stream Goods) {}
+    rpc Create(Goods) returns (Goods) {}
+    rpc Retrieve(GoodsRetrieveRequest) returns (Goods) {}
+    rpc Update(Goods) returns (Goods) {}
+    rpc Destroy(Goods) returns (google.protobuf.Empty) {}
+    rpc Query(GoodsQueryRequest) returns (stream Goods) {}
+}
+
+message Goods {
+    int32 id = 1;
+    string goods_code = 2;
+    string goods_name = 3;
+    string goods_desc = 4;
+    float goods_weight = 5;
+    float goods_w = 6;
+    float goods_d = 7;
+    float goods_h = 8;
+    string goods_unit = 9;
+    string goods_class = 10;
+    string goods_brand = 11;
+    string goods_color = 12;
+    string bar_code = 13;
+    bool partial = 14;
+}
+
+message GoodsListRequest {
+}
+
+message GoodsRetrieveRequest {
+    int32 id = 1;
+}
+
+message GoodsQueryRequest {
+    string publish_id = 1;
+}

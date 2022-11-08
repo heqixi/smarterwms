@@ -1,0 +1,105 @@
+syntax = "proto3";
+
+package stock;
+
+service StockController {
+    rpc List(StockListRequest) returns (stream Stock) {}
+    rpc Create(Stock) returns (StockCommonResponse) {}
+    rpc Retrieve(StockRetrieveRequest) returns (StockCommonResponse) {}
+    rpc Update(Stock) returns (StockCommonResponse) {}
+    rpc Destroy(Stock) returns (StockCommonResponse) {}
+    rpc Reserve(StockReserveRequest) returns (StockCommonResponse) {}
+    rpc Back(StockBackRequest) returns (StockCommonResponse) {}
+    rpc Ship(StockShipRequest) returns (StockCommonResponse) {}
+    rpc Query(QueryRequest) returns (stream Stock) {}
+}
+
+enum StockStatus {
+    DAMAGE = 0;
+
+    PURCHASED = 1;
+
+    SORTED = 2;
+
+    ONHAND = 3;
+
+    RESERVE = 11;
+
+    SHIP = 12;
+
+    BACK_ORDER = 13;
+}
+
+message Stock {
+    int32 id = 1;
+    int32 goods = 2;
+    int32 stock_qty = 3;
+    StockStatus stock_status = 4;
+    string goods_code = 5;
+    string goods_image = 6;
+}
+
+message StockUpdateRequest {
+    int32 id = 1;
+    int32 goods = 2;
+    int32 stock_qty = 3;
+    StockStatus stock_status = 4;
+    bool partial = 5;
+}
+
+message StockListRequest {
+}
+
+message StockCreateRequest {
+    int32 goods = 1;
+    int32 product_id = 2;
+    int32 stock_qty = 3;
+    StockStatus stock_status = 4;
+}
+
+message StockRetrieveRequest {
+    int32 id = 1;
+}
+
+message QueryRequest {
+    repeated int32 id = 1;
+    repeated int32 goods_id = 2;
+    repeated string goods_code = 3;
+    repeated StockStatus stock_status = 4;
+}
+
+message StockReserveRequest {
+    int32 stock_qty = 1;
+    int32 goods = 2;
+}
+
+message StockBackRequest {
+    int32 id = 1;
+    int32 to_reserve_qty = 2;
+    bool to_onhand = 3;
+    bool is_delete = 4;
+}
+
+message StockShipRequest {
+    int32 id = 1;
+}
+
+message StockCommonResponse {
+    enum Status {
+        SUCCESS = 0;
+        FAIL = 1;
+    }
+    enum Code {
+        UNKNOW = 0;
+        STOCK_NOT_FOUND = 1;
+        GOODS_NOT_FOUND = 2;
+        ILLEGAL_PARAMETERS = 3;
+        MISSING_PARAMETERS = 4;
+        ILLEGAL_STOCK_STATUS = 5;
+        NOT_ENOUGH_STOCK = 6;
+    }
+    Stock stock = 1;
+    Status status = 2;
+    Code code = 3;
+    string msg = 4;
+}

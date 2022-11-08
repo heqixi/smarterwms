@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package shopee;
+
+service ShopeeProductService {
+    rpc List(ListRequest) returns (stream ProductDetails) {}
+    rpc Create(ProductDetails) returns (ProductResponse) {}
+    rpc Retrieve(RetrieveRequest) returns (ProductResponse) {}
+    rpc Update(Product) returns (ProductResponse) {}
+    rpc Destroy(Product) returns (ProductResponse) {}
+    rpc Query(ProductQueryRequest) returns (stream ProductDetails) {}
+    rpc CreateSpecification(Specification) returns (SpecificationResponse) {}
+}
+
+message Product {
+
+}

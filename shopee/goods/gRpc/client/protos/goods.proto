@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package goods;
+
+service GoodsController {
+    rpc List(GoodsListRequest) returns (stream Goods) {}
+    rpc Create(Goods) returns (Response) {}
+    rpc Retrieve(GoodsRetrieveRequest) returns (Response) {}
+    rpc Update(Goods) returns (Response) {}
+    rpc Destroy(Goods) returns (Response) {}
+    rpc Query(GoodsQueryRequest) returns (stream Goods) {}
+}
+
+message Goods {
+    int32 id = 1;
+    string goods_code = 2;
+    string goods_name = 3;
+    string goods_image = 4;
+    string goods_desc = 5;
+    float goods_weight = 6;
+    float goods_w = 7;
+    float goods_d = 8;
+    float goods_h = 9;
+    string goods_unit = 10;
+    string goods_class = 11;
+    string goods_brand = 12;
+    string goods_color = 13;
+    string bar_code = 14;
+}
+
+message GoodsListRequest {
+}
+
+message GoodsRetrieveRequest {
+    int32 id = 1;
+}
+
+message GoodsQueryRequest {
+    string product_id = 1;
+}
+
+message Response {
+    enum Status {
+        SUCCESS = 0;
+        FAIL = 1;
+    }
+    enum Code {
+        UNKNOW = 0;
+        GOODS_NOT_FOUND = 1;
+        ILLEGAL_PARAMETERS = 3;
+        MISSING_PARAMETERS = 4;
+        DUPLICATE_GOODS_CODE = 5;
+    }
+    Status status = 1;
+    Goods goods = 2;
+    Code code = 3;
+    string msg = 4;
+}

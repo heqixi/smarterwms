@@ -1,0 +1,10 @@
+[2022-11-06 11:37:30,728] [autoreload.py:677] [autoreload:run_with_reloader] [INFO]- Watching for file changes with StatReloader
+[2022-11-06 11:37:30,728] [autoreload.py:677] [autoreload:run_with_reloader] [INFO]- Watching for file changes with StatReloader
+[2022-11-06 16:44:30,074] [autoreload.py:266] [autoreload:trigger_reload] [INFO]- C:\Users\heqix\anaconda3\envs\GreateWMS\Lib\site-packages\rest_framework\serializers.py changed, reloading.
+[2022-11-06 16:44:30,074] [autoreload.py:266] [autoreload:trigger_reload] [INFO]- C:\Users\heqix\anaconda3\envs\GreateWMS\Lib\site-packages\rest_framework\serializers.py changed, reloading.
+[2022-11-06 16:44:32,777] [autoreload.py:677] [autoreload:run_with_reloader] [INFO]- Watching for file changes with StatReloader
+[2022-11-06 16:44:32,777] [autoreload.py:677] [autoreload:run_with_reloader] [INFO]- Watching for file changes with StatReloader
+[2022-11-06 16:49:11,870] [autoreload.py:677] [autoreload:run_with_reloader] [INFO]- Watching for file changes with StatReloader
+[2022-11-06 16:49:11,870] [autoreload.py:677] [autoreload:run_with_reloader] [INFO]- Watching for file changes with StatReloader
+[2022-11-06 16:49:42,257] [autoreload.py:677] [autoreload:run_with_reloader] [INFO]- Watching for file changes with StatReloader
+[2022-11-06 16:49:42,257] [autoreload.py:677] [autoreload:run_with_reloader] [INFO]- Watching for file changes with StatReloader

@@ -1,0 +1,94 @@
+version: "3"
+services: 
+  kong-database:
+    image: postgres:9.6
+    restart: always  #每次总是启动
+    networks: 
+      - kong-net
+    environment:
+      POSTGRES_USER: kong
+      POSTGRES_DB: kong
+      POSTGRES_PASSWORD: kong
+    ports:
+      - "5432:5432"
+#######################
+# 执行数据库迁移
+######################
+  kong-migration:
+    image: kong:latest
+    command: "kong migrations bootstrap"
+    networks: 
+      - kong-net
+    restart: on-failure
+    environment:
+      - KONG_DATABASE=postgres
+      - KONG_PG_DATABASE=kong
+      - KONG_PG_PASSWORD=kong
+      - KONG_PG_HOST=kong-database
+    links: 
+      - kong-database #连接的是kong-database服务的
+    depends_on:
+      - kong-database #依赖于kong-database服务
+
+#####################
+# kong gateway
+#####################
+  kong:
+    image: kong:latest
+    restart: always
+    networks:
+      - kong-net
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-database
+      KONG_PG_PASSWORD: kong
+      KONG_PROXY_LISTEN: 0.0.0.0:8000
+      KONG_PROXY_LISTEN_SSL: 0.0.0.0:8443
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+    depends_on:
+      - kong-migration
+    links: 
+      - kong-database
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://kong:8001"]
+      interval: 5s
+      timeout: 2s
+      retries: 15
+    ports:
+      - "8001:8001"
+      - "8000:8000"
+      - "8443:8443"
+#######################
+#以下两个是konga  GUI
+#######################
+  konga-prepare:
+    image: pantsel/konga:latest
+    command: "-c prepare -a postgres -u postgresql://kong:kong@kong-database:5432/konga"  #注意是用户名：密码@数据库服务名称：端口
+    networks:
+      - kong-net
+    restart: on-failure
+    links:
+      - kong-database
+    depends_on:
+      - kong        #依赖kong服务
+      - kong-database #依赖kong-database服务
+
+  konga:
+    image: pantsel/konga:latest
+    restart: always
+    networks:
+      - kong-net
+    environment:
+      DB_ADAPTER: postgres
+      DB_HOST: kong-database
+      DB_USER: kong
+      DB_DATABASE: konga
+      DB_PASSWORD: kong #必须加上密码，不然会失败
+    depends_on:
+      - kong
+      - kong-database
+    ports:
+      - "1337:1337"
+networks:
+  kong-net:
+    driver: bridge

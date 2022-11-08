@@ -1,0 +1,3 @@
+
+class GlobalProduct(object):
+    pass

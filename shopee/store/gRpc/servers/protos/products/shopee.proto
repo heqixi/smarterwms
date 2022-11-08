@@ -1,0 +1,43 @@
+syntax = 'proto3';
+
+package shopee;
+
+import "google/protobuf/empty.proto";
+
+service ShopeeProductService {
+    rpc List(ProductListRequest) returns (stream Product) {}
+    rpc Create(Product) returns (Product) {}
+    rpc Retrieve(ProductRetrieveRequest) returns (Product) {}
+    rpc Update(Product) returns (Product) {}
+    rpc Destory(Product) returns (Product) {}
+    rpc Query(QueryRequest) returns (stream Product) {}
+}
+
+message StoreProduct {
+    int32 id = 1;
+    int32 store_id = 2;
+    int32 product_id = 3;
+    string product_name = 4;
+    string product_status = 5;
+    string product_sku = 6;
+    string image_url = 7;
+    int32 category_id = 8;
+    int32 brand_id = 9;
+    string brand_name = 10;
+    int32 days_to_ship = 11;
+
+    int32 store = 2;
+    int32 product_id = 3;
+    string product_name = 4;
+}
+
+message ProductListRequest {
+}
+
+message ProductRetrieveRequest {
+}
+
+message QueryRequest {
+    int32 product_id = 1;
+}
+

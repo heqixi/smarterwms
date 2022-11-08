@@ -1,0 +1,32 @@
+syntax = 'proto3';
+
+package shopee_product;
+
+import "google/protobuf/empty.proto";
+
+service ProductServiceController {
+    rpc List(ProductListRequest) returns (stream Product) {}
+    rpc Create(Product) returns (Product) {}
+    rpc Retrieve(ProductRetrieveRequest) returns (Product) {}
+    rpc Update(Product) returns (Product) {}
+    rpc Destory(Product) returns (Product) {}
+    rpc Query(QueryRequest) returns (stream Product) {}
+}
+
+message Product {
+    int32 id = 1;
+    int32 store = 2;
+    int32 product_id = 3;
+    string product_name = 4;
+}
+
+message ProductListRequest {
+}
+
+message ProductRetrieveRequest {
+}
+
+message QueryRequest {
+    int32 product_id = 1;
+}
+
