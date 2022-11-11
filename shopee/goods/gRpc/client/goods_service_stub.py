@@ -1,9 +1,11 @@
 import threading
 import grpc
+from django.db import transaction
 
 from goods.gRpc.client.protos import goods_pb2_grpc, goods_pb2
-from goods.gRpc.client.types.goods import CreateRequest, UpdateRequest
+from goods.gRpc.client.types.goods import CreateRequest, UpdateRequest, CreateGroupRequest
 from goods.gRpc.client.types.goods import Response
+from goods.models import GoodsGroupRecord, GoodsRecord
 
 
 class GoodsServiceClient(object):
@@ -58,6 +60,35 @@ class GoodsServiceClient(object):
 
     def list(self):
         return self.service_stub.List(goods_pb2.GoodsListRequest())
+
+    def create_group(self, req: CreateGroupRequest):
+        if not req.is_valid():
+            raise Exception('create group illegal req')
+        try:
+            goods_group = self.service_stub.Create(req.to_message())
+        except Exception as exc:
+            print('create goods group remote exception,', exc)
+            raise Exception('create goods group remote exception ')
+        else:
+            group_record = self._create_group_record(goods_group)
+        return group_record
+
+    @transaction.atomic
+    def _create_group_record(self, goods_group):
+        group_record = GoodsGroupRecord.objects.create(
+            group_id=goods_group.id,
+            name=goods_group.name
+        )
+        for goods in goods_group:
+            self._create_goods_record(goods, group_record.id)
+
+    def _create_goods_record(self, goods, group_id):
+        return GoodsRecord.objects.create(
+            goods_id=goods.id,
+            goods_code=goods.goods_code,
+            goods_image=goods.goods_image,
+            group_id=group_id
+        )
 
 
 

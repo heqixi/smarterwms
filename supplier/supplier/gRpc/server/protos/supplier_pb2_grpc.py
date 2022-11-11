@@ -2,10 +2,10 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from . import goods_pb2 as goods__pb2
+from . import supplier_pb2 as supplier__pb2
 
 
-class GoodsControllerStub(object):
+class SupplierControllerStub(object):
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -15,43 +15,38 @@ class GoodsControllerStub(object):
             channel: A grpc.Channel.
         """
         self.List = channel.unary_stream(
-                '/goods.GoodsController/List',
-                request_serializer=goods__pb2.GoodsListRequest.SerializeToString,
-                response_deserializer=goods__pb2.Goods.FromString,
+                '/supplier.SupplierController/List',
+                request_serializer=supplier__pb2.SupplierListRequest.SerializeToString,
+                response_deserializer=supplier__pb2.Supplier.FromString,
                 )
         self.Create = channel.unary_unary(
-                '/goods.GoodsController/Create',
-                request_serializer=goods__pb2.Goods.SerializeToString,
-                response_deserializer=goods__pb2.Response.FromString,
+                '/supplier.SupplierController/Create',
+                request_serializer=supplier__pb2.Supplier.SerializeToString,
+                response_deserializer=supplier__pb2.Response.FromString,
                 )
         self.Retrieve = channel.unary_unary(
-                '/goods.GoodsController/Retrieve',
-                request_serializer=goods__pb2.GoodsRetrieveRequest.SerializeToString,
-                response_deserializer=goods__pb2.Response.FromString,
+                '/supplier.SupplierController/Retrieve',
+                request_serializer=supplier__pb2.SupplierListRequest.SerializeToString,
+                response_deserializer=supplier__pb2.Response.FromString,
                 )
         self.Update = channel.unary_unary(
-                '/goods.GoodsController/Update',
-                request_serializer=goods__pb2.Goods.SerializeToString,
-                response_deserializer=goods__pb2.Response.FromString,
+                '/supplier.SupplierController/Update',
+                request_serializer=supplier__pb2.Supplier.SerializeToString,
+                response_deserializer=supplier__pb2.Response.FromString,
                 )
         self.Destroy = channel.unary_unary(
-                '/goods.GoodsController/Destroy',
-                request_serializer=goods__pb2.Goods.SerializeToString,
-                response_deserializer=goods__pb2.Response.FromString,
+                '/supplier.SupplierController/Destroy',
+                request_serializer=supplier__pb2.Supplier.SerializeToString,
+                response_deserializer=supplier__pb2.Response.FromString,
                 )
-        self.Query = channel.unary_stream(
-                '/goods.GoodsController/Query',
-                request_serializer=goods__pb2.GoodsQueryRequest.SerializeToString,
-                response_deserializer=goods__pb2.Goods.FromString,
-                )
-        self.CreateGroup = channel.unary_unary(
-                '/goods.GoodsController/CreateGroup',
-                request_serializer=goods__pb2.GoodsGroup.SerializeToString,
-                response_deserializer=goods__pb2.GoodsGroup.FromString,
+        self.CreatePurchasePlan = channel.unary_unary(
+                '/supplier.SupplierController/CreatePurchasePlan',
+                request_serializer=supplier__pb2.PurchasePlan.SerializeToString,
+                response_deserializer=supplier__pb2.PurchasePlan.FromString,
                 )
 
 
-class GoodsControllerServicer(object):
+class SupplierControllerServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def List(self, request, context):
@@ -84,64 +79,53 @@ class GoodsControllerServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def Query(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def CreateGroup(self, request, context):
+    def CreatePurchasePlan(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
 
-def add_GoodsControllerServicer_to_server(servicer, server):
+def add_SupplierControllerServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'List': grpc.unary_stream_rpc_method_handler(
                     servicer.List,
-                    request_deserializer=goods__pb2.GoodsListRequest.FromString,
-                    response_serializer=goods__pb2.Goods.SerializeToString,
+                    request_deserializer=supplier__pb2.SupplierListRequest.FromString,
+                    response_serializer=supplier__pb2.Supplier.SerializeToString,
             ),
             'Create': grpc.unary_unary_rpc_method_handler(
                     servicer.Create,
-                    request_deserializer=goods__pb2.Goods.FromString,
-                    response_serializer=goods__pb2.Response.SerializeToString,
+                    request_deserializer=supplier__pb2.Supplier.FromString,
+                    response_serializer=supplier__pb2.Response.SerializeToString,
             ),
             'Retrieve': grpc.unary_unary_rpc_method_handler(
                     servicer.Retrieve,
-                    request_deserializer=goods__pb2.GoodsRetrieveRequest.FromString,
-                    response_serializer=goods__pb2.Response.SerializeToString,
+                    request_deserializer=supplier__pb2.SupplierListRequest.FromString,
+                    response_serializer=supplier__pb2.Response.SerializeToString,
             ),
             'Update': grpc.unary_unary_rpc_method_handler(
                     servicer.Update,
-                    request_deserializer=goods__pb2.Goods.FromString,
-                    response_serializer=goods__pb2.Response.SerializeToString,
+                    request_deserializer=supplier__pb2.Supplier.FromString,
+                    response_serializer=supplier__pb2.Response.SerializeToString,
             ),
             'Destroy': grpc.unary_unary_rpc_method_handler(
                     servicer.Destroy,
-                    request_deserializer=goods__pb2.Goods.FromString,
-                    response_serializer=goods__pb2.Response.SerializeToString,
+                    request_deserializer=supplier__pb2.Supplier.FromString,
+                    response_serializer=supplier__pb2.Response.SerializeToString,
             ),
-            'Query': grpc.unary_stream_rpc_method_handler(
-                    servicer.Query,
-                    request_deserializer=goods__pb2.GoodsQueryRequest.FromString,
-                    response_serializer=goods__pb2.Goods.SerializeToString,
-            ),
-            'CreateGroup': grpc.unary_unary_rpc_method_handler(
-                    servicer.CreateGroup,
-                    request_deserializer=goods__pb2.GoodsGroup.FromString,
-                    response_serializer=goods__pb2.GoodsGroup.SerializeToString,
+            'CreatePurchasePlan': grpc.unary_unary_rpc_method_handler(
+                    servicer.CreatePurchasePlan,
+                    request_deserializer=supplier__pb2.PurchasePlan.FromString,
+                    response_serializer=supplier__pb2.PurchasePlan.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'goods.GoodsController', rpc_method_handlers)
+            'supplier.SupplierController', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
  # This class is part of an EXPERIMENTAL API.
-class GoodsController(object):
+class SupplierController(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
@@ -155,9 +139,9 @@ class GoodsController(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_stream(request, target, '/goods.GoodsController/List',
-            goods__pb2.GoodsListRequest.SerializeToString,
-            goods__pb2.Goods.FromString,
+        return grpc.experimental.unary_stream(request, target, '/supplier.SupplierController/List',
+            supplier__pb2.SupplierListRequest.SerializeToString,
+            supplier__pb2.Supplier.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -172,9 +156,9 @@ class GoodsController(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/goods.GoodsController/Create',
-            goods__pb2.Goods.SerializeToString,
-            goods__pb2.Response.FromString,
+        return grpc.experimental.unary_unary(request, target, '/supplier.SupplierController/Create',
+            supplier__pb2.Supplier.SerializeToString,
+            supplier__pb2.Response.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -189,9 +173,9 @@ class GoodsController(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/goods.GoodsController/Retrieve',
-            goods__pb2.GoodsRetrieveRequest.SerializeToString,
-            goods__pb2.Response.FromString,
+        return grpc.experimental.unary_unary(request, target, '/supplier.SupplierController/Retrieve',
+            supplier__pb2.SupplierListRequest.SerializeToString,
+            supplier__pb2.Response.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -206,9 +190,9 @@ class GoodsController(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/goods.GoodsController/Update',
-            goods__pb2.Goods.SerializeToString,
-            goods__pb2.Response.FromString,
+        return grpc.experimental.unary_unary(request, target, '/supplier.SupplierController/Update',
+            supplier__pb2.Supplier.SerializeToString,
+            supplier__pb2.Response.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -223,14 +207,14 @@ class GoodsController(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/goods.GoodsController/Destroy',
-            goods__pb2.Goods.SerializeToString,
-            goods__pb2.Response.FromString,
+        return grpc.experimental.unary_unary(request, target, '/supplier.SupplierController/Destroy',
+            supplier__pb2.Supplier.SerializeToString,
+            supplier__pb2.Response.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def Query(request,
+    def CreatePurchasePlan(request,
             target,
             options=(),
             channel_credentials=None,
@@ -240,25 +224,8 @@ class GoodsController(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_stream(request, target, '/goods.GoodsController/Query',
-            goods__pb2.GoodsQueryRequest.SerializeToString,
-            goods__pb2.Goods.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def CreateGroup(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/goods.GoodsController/CreateGroup',
-            goods__pb2.GoodsGroup.SerializeToString,
-            goods__pb2.GoodsGroup.FromString,
+        return grpc.experimental.unary_unary(request, target, '/supplier.SupplierController/CreatePurchasePlan',
+            supplier__pb2.PurchasePlan.SerializeToString,
+            supplier__pb2.PurchasePlan.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

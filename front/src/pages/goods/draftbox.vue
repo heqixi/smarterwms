@@ -39,7 +39,7 @@ import NewForm from '../../components/Share/newForm.vue'
 import GoodsEditPriceDialog from 'src/pages/goods/components/goodsPriceEdit'
 import NewProductsDialog from 'pages/goods/components/newProductsDialog'
 import SelectStore from 'pages/goods/components/selectstoredialog'
-import { CURRENCY_CODE } from 'src/store/goods/types'
+import mediaService from 'pages/goods/services/mediaservice'
 
 export default {
   name: 'Pagegoodslist',
@@ -58,7 +58,8 @@ export default {
       openid: '',
       login_name: '',
       authin: '0',
-      pathname: 'product',
+      pathPrefix: 'store/global/',
+      pathname: 'store/global/?product_status=EDIT,PUBLISH_READY&type=1&store_detail=true',
       pathname_previous: '',
       pathname_next: '',
       separator: 'cell',
@@ -131,46 +132,15 @@ export default {
           label: '图片',
           align: 'center',
           type: 'image',
-          field: 'image',
+          field: 'image_url',
           style: 'width:100px'
         },
-        // {
-        //   name: 'tags',
-        //   required: true,
-        //   label: '标签',
-        //   align: 'center',
-        //   options: 'tagsOptions',
-        //   field: 'tags',
-        //   multiple: true,
-        //   edit: true,
-        //   type: 'select',
-        //   style: {
-        //     width: '200px',
-        //     whiteSpace: 'normal'
-        //   },
-        //   optionLabel: tagObj => {
-        //     if (tagObj == undefined || tagObj.length <= 0) {
-        //       return '添加标签'
-        //     }
-        //     return tagObj.tag
-        //   },
-        //   newValue: goods => {
-        //     return new Promise((resolve, reject) => {
-        //       _this.newGoodsTag(goods).then(tag => {
-        //         resolve(tag)
-        //       })
-        //     })
-        //   },
-        //   onUpdate: (goods, newValue) => {
-        //     return _this.updateGoodsTags(goods, newValue)
-        //   }
-        // },
         {
           name: 'product_sku',
           required: true,
           label: this.$t('goods.view_goodslist.goods_code'),
           align: 'center',
-          field: 'sku',
+          field: 'product_sku',
           type: 'text',
           style: {
             width: '100px',
@@ -183,7 +153,7 @@ export default {
           label: this.$t('goods.view_goodslist.goods_name'),
           align: 'center',
           type: 'longText',
-          field: 'name',
+          field: 'product_name',
           style: {
             width: '200px',
             whiteSpace: 'normal'
@@ -195,22 +165,23 @@ export default {
           field: 'store',
           align: 'center',
           class: 'col-4 text-center',
+          type: 'text',
           style: { width: '200px', maxWidth: '200px', whiteSpace: 'normal', fontSize: '4px' },
-          fieldMap: store => { return store.name + '(' + store.area + ')' }
+          fieldMap: store => { return store.name}
         },
         {
           name: 'status',
           label: '状态',
-          field: 'status',
+          field: 'product_status',
           align: 'center',
           style: 'width:50px',
           type: 'text',
           fieldMap: status => {
             if (status === 'PB') {
               return '已发布'
-            } else if (status === 'PR') {
+            } else if (status === 'PUBLISH_READY') {
               return '可发布'
-            } else if (status === 'ED') {
+            } else if (status === 'EDIT') {
               return '待编辑'
             }
           }
@@ -356,127 +327,116 @@ export default {
           })
           return
         }
-        getauth(`goods/product/${product.id}/?models=true&publish=true&product_supplier=true&product_logistic=true`, {}).then(productWidthModels => {
-          console.log('get product with models ', productWidthModels)
-          const productModels = productWidthModels.models
-          const productPriceInfo = []
-          stores.forEach(store => {
-            const models = JSON.parse(JSON.stringify(productModels))
-            let discount
-            const discountModelList = []
-            models.forEach(model => {
-              const storePrice = model.price_info.find(priceInfo => {
-                return priceInfo.store_id === store.uid
+        const storeIds = stores.map(store => { return store.id }).join(',')
+        getauth(`shopee/publish/product/shop?id=${product.id}&stop_id=${storeIds}&models=true&supplier_info=true&product_medias=true&options=true`, {})
+          .then(globalProduct => {
+            console.log('get product with models ', globalProduct)
+            const productPriceInfo = []
+            stores.forEach(store => {
+              const shopProduct = globalProduct.shop_products.find(p => { return p.store.id === store.id })
+              shopProduct.variants.forEach(variant => {
+                const globalVariant = globalProduct.variants.find(v => { return v.model_sku === variant.model_sku })
+                variant.image_url = globalVariant.image
+                variant.price_info = variant.price_info || {
+                  original_price: undefined,
+                  current_price: undefined,
+                  global_price: undefined
+                }
+                variant.price_info.global_price = globalVariant.price_info ? globalVariant.price_info.original_price : undefined
+                // Usually, all variants of same shop product should share same promotion_id
+                shopProduct.promotion_id = variant.promotion_id ? variant.promotion_id : shopProduct.promotion_id
+                shopProduct.supplier_info = globalProduct.supplier_info
               })
-              const currentPrice = storePrice ? storePrice.current_price : 0
-              const originalPrice = storePrice ? storePrice.original_price : 0
-              discount = storePrice ? { discount_id: storePrice.discount_id } : { discount_id: 0 }
-              if (!model.current_price) {
-                _this.$set(model, 'current_price', currentPrice)
-                _this.$set(model, 'discount', discount)
-              }
-              if (!model.original_price) {
-                _this.$set(model, 'original_price', originalPrice)
-              }
-              model.model_id = store.uid + '_' + model.sku
-
-              discountModelList.push({
-                model_id: model.model_id,
-                model_original_price: originalPrice,
-                model_promotion_price: currentPrice
-              })
+              shopProduct.store = store
+              productPriceInfo.push(shopProduct)
             })
-            const priceInfo = {
-              area: store.area,
-              // image: _this.product.image,
-              // sku: _this.product.sku,
-              models: models,
-              currency: CURRENCY_CODE[store.area],
-              type: 'shopee',
-              store_id: store.uid,
-              store_name: store.name,
-              discount: {
-                discount_id: discount ? discount.discount_id : 0,
-                item_list: [{ model_list: discountModelList }]
-              },
-              store: store,
-              supplier: productWidthModels.supplier,
-              logistic: productWidthModels.logistic,
-              sku: product.sku,
-              image: product.image
-            }
-            productPriceInfo.push(priceInfo)
+            console.log('wrap price info  with models ', productPriceInfo)
+            _this.$q.dialog({
+              component: GoodsEditPriceDialog,
+              products: productPriceInfo,
+              rowKey: 'store_id',
+              modelKey: 'sku',
+              editOriginalPrice: true,
+              tableStyle: {
+                width: '1500px',
+                maxWidth: '1500px'
+              }
+            }).onOk((priceInfos) => {
+              console.log('edit priece result, ok ', priceInfos)
+              _this.saveModelStorePrice(globalProduct, priceInfos)
+            })
           })
-          console.log('wrap price info  with models ', productPriceInfo)
-          _this.$q.dialog({
-            component: GoodsEditPriceDialog,
-            products: productPriceInfo,
-            rowKey: 'store_id',
-            modelKey: 'sku',
-            editOriginalPrice: true,
-            tableStyle: {
-              width: '1500px',
-              maxWidth: '1500px'
-            }
-          }).onOk((priceInfos) => {
-            console.log('edit priece result, ok ', priceInfos)
-            _this.saveModelStorePrice(product, priceInfos)
-          })
-        })
       })
     },
-    saveModelStorePrice (product, priceInfos) {
+    saveModelStorePrice (globalProduct, shopProducts) {
       var _this = this
-      const priceInfo2Save = []
-      const store2Publish = []
-      priceInfos.forEach(priceInfo => {
-        const storeId = priceInfo.store_id
-        store2Publish.push(storeId)
-        priceInfo.models.forEach(model => {
-          const existStorePrice = model.price_info.find(info => {
-            return info.store_id === storeId
-          })
-          if (!existStorePrice) {
-            priceInfo2Save.push({
-              store_id: storeId,
-              current_price: model.current_price,
-              original_price: model.original_price,
-              product: model.id,
-              discount_id: priceInfo.discount.discount_id,
-              currency: priceInfo.currency
-            })
-          } else if (existStorePrice.original_price !== model.original_price ||
-            existStorePrice.current_price !== model.current_price) {
-            priceInfo2Save.push({
-              current_price: model.current_price,
-              original_price: model.original_price,
-              discount_id: priceInfo.discount.discount_id,
-              id: existStorePrice.id
-            })
-          }
-        })
-      })
-      if (priceInfo2Save.length > 0) {
-        console.log(' priceInfo2Save priece result, ok ', priceInfo2Save)
-        postauth('publish/price', priceInfo2Save).then(res => {
+      const store2Publish = shopProducts.map(product => { return product.store.id })
+      if (shopProducts.length > 0) {
+        console.log(' priceInfo2Save priece result, ok ', shopProducts)
+        postauth('shopee/publish/product/price', shopProducts).then(res => {
           console.log('save or update model price ', res)
-          _this.publishProduct(product, store2Publish)
+          _this.publishProduct(globalProduct, store2Publish)
         })
       } else {
-        this.publishProduct(product, store2Publish)
+        this.publishProduct(globalProduct, store2Publish)
       }
     },
-    publishProduct (product, stores) {
-      postauth(this.pathname + '/publish', { id: product.id, stores: stores }).then(res => {
+    async publishProduct (product, stores) {
+      product.medias.sort((x, y) => { return x.index - y.index })
+      const image2publish = []
+      product.medias.forEach(media => {
+        if (image2publish.length < 8 && (media.image_id || media.url)) {
+          image2publish.push(media)
+        }
+      })
+
+      const image2Fetch = image2publish.filter(media => { return !media.image_id })
+      await this.fetchProductImageRecursieve(image2Fetch, 0)
+
+      const option2FetchImage = product.option_items.filter(item => {
+        const option = product.options.find(opt => { return opt.id === item.store_product_option })
+        return option.index === 0 && !item.image_id
+      })
+      await this.fetchOptionImageRecursieve(option2FetchImage, 0)
+      if (image2Fetch.length || option2FetchImage.length) {
+        const mediaInfo = {
+          product_media: image2Fetch,
+          option_media: option2FetchImage
+        }
+        console.log('publish media image ', mediaInfo)
+        const res = await postauth('shopee/publish/media', mediaInfo)
+        console.log('publish media res ', res)
+      }
+      // publish product
+      postauth('shopee/publish/product/publish', { id: product.id, stores: stores }).then(res => {
         console.log('publish product res ', res)
       })
+    },
+    async fetchProductImageRecursieve (mediaList, i) {
+      if (i >= mediaList.length) {
+        return
+      }
+      const fetchResult = await mediaService.imgUrlToFile(mediaList[i].url)
+      mediaList[i].file = fetchResult.fileBytes
+      mediaList[i].filename = fetchResult.filename
+      await this.fetchProductImageRecursieve(mediaList, i + 1)
+    },
+    async fetchOptionImageRecursieve (mediaList, i) {
+      if (i >= mediaList.length) {
+        return
+      }
+      const fetchResult = await mediaService.imgUrlToFile(mediaList[i].image_url)
+      mediaList[i].file = fetchResult.fileBytes
+      mediaList[i].filename = fetchResult.filename
+      await this.fetchOptionImageRecursieve(mediaList, i + 1)
     },
     editProductPopup (product) {
       const productId = product ? product.id : undefined
       var _this = this
       _this.$q.dialog({
         component: NewProductsDialog,
-        productId: productId
+        productId: productId,
+        merchant: product.store.merchant
       }).onOk((saveProduct) => {
         product.sku = saveProduct.sku
         product.desc = saveProduct.desc
@@ -489,7 +449,7 @@ export default {
       const productIds = products.map(product => { return product.id })
       _this.loading = true
       console.log('delete products ', productIds)
-      postauth(_this.pathname + '/delete', productIds).then(res => {
+      postauth(_this.pathPrefix + '/delete', productIds).then(res => {
         console.log('delete goods success ', res)
         productIds.forEach(productId => {
           for (var i = _this.table_list.length - 1; i >= 0; i--) {
@@ -519,11 +479,7 @@ export default {
     getList () {
       var _this = this
       _this.loading = true
-      getauth(
-        _this.pathname +
-        '?tags=details&status__in=PR,ED',
-        {}
-      ).then(res => {
+      getauth(_this.pathname, {}).then(res => {
         console.log('get product List ', res)
         _this.table_list = res.results
         _this.numRows = res.count
@@ -684,9 +640,6 @@ export default {
     reFresh () {
       var _this = this
       _this.getList()
-    },
-    getStoreInfo () {
-
     }
   },
   created () {

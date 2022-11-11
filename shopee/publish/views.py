@@ -7,19 +7,19 @@ from rest_framework.filters import OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.response import Response
 
-from category.serializers import ProductAttributePostSerializer, ProductCategoryBrandPostSerializer
 from globalproduct.gRpc.client.global_product import ProductServiceClient
 from globalproduct.models import GlobalProductRelations
 from store.common import StoreType
-from store.models import StoreProductModel, StoreModel, StoreProductMedia, StoreProductOptionModel, \
-    StoreProductOptionItemModel, StoreProductVariantModel, StoreProductVariantStock, StoreProductPriceInfoModel
+from store.models import StoreProductModel, StoreModel, StoreProductPriceInfoModel, StoreProductMedia
 from store.serializers import StoreGlobalProductListGetSerializer, StoreShopProductDetailSerializer
 from store.services.store_service import StoreService
 from utils.datasolve import parse_float
-from .models import ProductCategoryAttribute, ProductCategoryBrand, ProductCategory
 from .services.product_service import ProductPublishService
 
 import logging
+
+from .services.producthelper import ProductHelper
+
 logger = logging.getLogger()
 
 
@@ -34,8 +34,12 @@ class GlobalProductView(viewsets.ModelViewSet):
         except:
             return None
 
+    def get_queryset(self):
+        openid = self.request.META.get('HTTP_TOKEN')
+        return StoreProductModel.objects.filter(openid=openid)
+
     def publish_to_shopee(self, request):
-        data = self.request.data
+        data = request.data
         product_id = data.get('id', None)
         if not product_id:
             raise APIException('Must specify product id to publish ')
@@ -45,30 +49,34 @@ class GlobalProductView(viewsets.ModelViewSet):
         product = StoreProductModel.objects.filter(id=product_id).first()
         if not product:
             raise APIException('Can not find product of id %s ' % product_id)
-        shop_of_same_merchant = []
-        for store_uid in stores:
-            store = StoreService.get_instance().get_store_by_uid(store_uid)
-            if store['type'] == StoreType.SHOP:
+        store_group_by_merchant = []
+        for store_id in stores:
+            store = StoreModel.objects.get(id=store_id)
+            if store.type == StoreType.SHOP:
                 found = False
-                for merchant, shopes in shop_of_same_merchant:
-                    if merchant['id'] == store['merchant']['id']:
+                for merchant, stores in store_group_by_merchant:
+                    if merchant.id == store.merchant.id:
                         found = True
-                        shopes.append(store)
+                        stores.append(store)
                 if not found:
-                    shop_of_same_merchant.append((store['merchant'], [store]))
-        for merchant, shopes in shop_of_same_merchant:
-            ProductPublishService.get_instance().publish_shopee(product, merchant['uid'], shopes)
+                    store_group_by_merchant.append((store.merchant, [store]))
+        for merchant, stores in store_group_by_merchant:
+            ProductPublishService.get_instance().publish_shopee(product, merchant.uid, stores)
         return Response('success', status=200)
 
-    def get_serializer_class(self):
-        if self.action in ['list', 'retrieve']:
-            raise Exception('Improper Denpendency') #TODO
-            # return serializers.GlobalProductGetSerializers
-        if self.action in ['create', 'update', 'partial_update', 'publish_to_shopee']:
-            raise Exception('Improper Denpendency')  # TODO
-            # return serializers.GlobalProductSerializers
-        else:
-            return self.http_method_not_allowed(request=self.request)
+    # def get_serializer_class(self):
+    #     if self.action in ['list', 'retrieve']:
+    #         raise Exception('Improper Denpendency') #TODO
+    #         # return serializers.GlobalProductGetSerializers
+    #     if self.action in ['create', 'update', 'partial_update', 'publish_to_shopee', 'update_price']:
+    #         return serializers.GlobalProductSerializers
+    #     else:
+    #         return self.http_method_not_allowed(request=self.request)
+
+    def retrieve(self, request, *args, **kwargs):
+        store_product = self.get_object()
+        product_json = StoreShopProductDetailSerializer(store_product).data
+        return Response(product_json, status=200)
 
     def claim_global_product(self, request, *args, **kwargs):
         data = request.data
@@ -115,24 +123,24 @@ class GlobalProductView(viewsets.ModelViewSet):
     @transaction.atomic
     def create(self, request, *args, **kwargs):
         data = request.data
-        global_product_id = data.get('global_product_id', None)
-        if not global_product_id:
-            raise APIException('Missing global product id')
+        product_id = data.get('id', None)
+        if not product_id:
+            raise APIException('Missing product id')
         store_id = None
         if data.get('merchant', None):
             store_id = data['merchant'].get('id', None)
         if not store_id:
             raise APIException('Missing store id')
         store = StoreModel.objects.get(id=store_id)
-        global_relations = GlobalProductRelations.objects.filter(global_product_id=global_product_id, store=store).first()
-        if not global_relations:
+        product = StoreProductModel.objects.filter(id=product_id).first()
+        if not product:
             product = self._create_shopee_product(data, store)
         else:
-            product = global_relations.product
             product.product_name = data.get('name', product.product_name)
             product.product_sku = data.get('sku', product.product_sku)
             product.image_url = data.get('image', product.image_url)
             product.description = data.get('desc', product.description)
+            product.product_status = data.get('status', product.product_status)
         logistic = data.get('logistic', None)
         if logistic:
             product.weight = parse_float(logistic.get('weight', None), product.weight)
@@ -149,13 +157,12 @@ class GlobalProductView(viewsets.ModelViewSet):
         raise Exception('Improper denpendency') #TODO
 
     def _create_shopee_product(self, data, store):
-
         product = StoreProductModel.objects.create(
             openid=self.request.META.get('HTTP_TOKEN'),
             creater=self.request.META.get('HTTP_OPERATOR'),
             store=store,
             product_name=data.get('name', None),
-            product_status=StoreProductModel.Status.EDIT,
+            product_status=data.get('status', StoreProductModel.Status.EDIT),
             product_sku=data.get('sku', None),
             image_url=data.get('image', None),
             description=data.get('desc', None)
@@ -180,301 +187,98 @@ class GlobalProductView(viewsets.ModelViewSet):
     def _create_or_update_product_detail(self, product, data):
         images_infos = data.get('images', None)
         if images_infos:
-            self._create_or_update_images(product, images_infos)
+            ProductHelper.create_or_update_images(product, images_infos)
         spec_info = data.get('specifications', None)
         if spec_info:
-            self._create_or_update_spec(product, spec_info)
+            ProductHelper.create_or_update_spec(product, spec_info)
         models_info = data.get('models_info', None)
         if models_info:
-            self._create_or_update_models(product, models_info)
+            ProductHelper.create_or_update_models(product, models_info)
         category_info = data.get('category', None)
         if category_info:
-            self._create_or_update_category(product, category_info)
-
-    def _create_or_update_images(self, product, images_infos):
-        for image_info in images_infos:
-            image_info['creater'] = product.creater
-            image_info['openid'] = product.openid
-            image_info['product'] = product.id
-            image_index = image_info.get('index', None)
-            url = image_info.get('url', None)
-            if image_index is not None and url:
-                image_instance = StoreProductMedia.objects.filter(store_product=product, index=image_index, type=2).first()
-                if image_instance:
-                    image_instance.url = url
-                    image_instance.save()
-                else:
-                    image_instance = StoreProductMedia.objects.create(
-                        openid=product.openid,
-                        creater=product.creater,
-                        store_product=product,
-                        type=2,
-                        url=url,
-                        index=image_index
-                    )
-        return images_infos
-
-    def _create_or_update_models(self, product, models_info):
-        models = list(StoreProductVariantModel.objects.filter(store_product=product, is_delete=False).all())
-        for data in models_info:
-            options_index = data.get('options_index', None)
-            if not options_index:
-                raise Exception('Create/update model missing options index %s' % data.get('sku', None))
-            model_match = [m for m in models if m.option_item_index == options_index]
-            model_instance = model_match[0] if model_match else None
-            if not model_instance:
-                model_instance = StoreProductVariantModel.objects.create(
-                    openid=product.openid,
-                    creater=product.creater,
-                    store_product=product,
-                    model_sku=data.get('sku', None),
-                    option_item_index=options_index
-                )
-            else:
-                model_instance.model_sku = data.get('sku', model_instance.model_sku)
-                model_instance.save()
-            if not data.get('stock', None):
-                continue
-            stock = data.get('stock')
-            if stock.get('stock_qty', None):
-                stock_info = StoreProductVariantStock.objects.filter(variant=model_instance,
-                                                                     is_delete=False).first()
-                if not stock_info:
-                    stock_info = StoreProductVariantStock.objects.create(
-                        openid=product.openid,
-                        creater=product.creater,
-                        variant=model_instance,
-                        current_stock=stock.get('stock_qty')
-                    )
-                else:
-                    stock_info.current_stock = data.get('stock').get('stock_qty', stock_info.current_stock)
-                    stock_info.save()
-            if stock.get('price', None):
-                price_info = StoreProductPriceInfoModel.objects.filter(variant=model_instance, is_delete=False).first()
-                if not price_info:
-                    price_info = StoreProductPriceInfoModel.objects.create(
-                        openid=product.openid,
-                        creater=product.creater,
-                        variant=model_instance,
-                        store_product=product,
-                        original_price=stock.get('price')
-                    )
-                else:
-                    price_info.original_price = stock.get('price')
-                    price_info.save()
-
-    def _create_or_update_spec(self, product, spec_info):
-        for data in spec_info:
-            index = data.get('index', None)
-            name = data.get('name', None)
-            if index is None:
-                logger.error('can not create spec, missing index %s', name)
-                raise APIException('Create spec missing index %s ' % name)
-            if not name:
-                logger.error('can not create spec, missing name %s', index)
-                raise APIException('Create spec missing name %s ' % index)
-            spec = StoreProductOptionModel.objects.filter(index=index, store_product=product).first()
-            if not spec:
-                spec = StoreProductOptionModel.objects.create(
-                    openid=product.openid,
-                    creater=product.creater,
-                    store_product=product,
-                    name=name,
-                    index=index
-                )
-            else:
-                spec.name = name
-                spec.save()
-            options = data.get('options', [])
-            for option in options:
-                self._create_or_update_option(product, spec, option)
-        return spec_info
-
-    def _create_or_update_category(self, product, category_info):
-        print('create category ,', product.id, category_info.get('category_id', None))
-        category_id = category_info.get('category_id', None)
-        if not category_id:
-            logger.warning('create or update category no category id')
-            return
-        category_instance = ProductCategory.objects.filter(product=product, is_delete=False).first()
-        brand_info = category_info.get('brand', None)
-        brand_instance = category_instance.brand if category_instance else None
-        if not brand_instance:
-            brand_id = brand_info.get('brand_id', 0) if brand_info else 0
-            display_brand_name = brand_info.get('display_brand_name', 'NoBrand') if brand_info else 'NoBrand'
-            brand_instance = ProductCategoryBrand.objects.create(
-                openid=product.openid,
-                creater=product.creater,
-                brand_id=brand_id,
-                display_brand_name=display_brand_name
-            )
-        if not category_instance:
-            category_instance = ProductCategory.objects.create(
-                openid=product.openid,
-                creater=product.creater,
-                merchant_id=product.store.uid,
-                category_id=category_id,
-                brand=brand_instance,
-                product=product
-            )
-        else:
-            category_instance.category_id = category_id
-            category_instance.brand = brand_instance
-            category_instance.save()
-
-        ProductCategoryAttribute.objects.filter(Q(category_id=category_instance.id)).delete()
-        attribute_values_info = category_info.get('attribute_values', None)
-        if attribute_values_info:
-            self._create_category_attribute(category_instance, attribute_values_info)
+            ProductHelper.create_or_update_category(product, category_info)
+        supplier_info = data.get('supplier', None)
+        if supplier_info:
+            ProductHelper.create_or_update_supplier_info(product, supplier_info)
 
     def _create_product_media(self, product, image_info):
-        logger.info('create prdocut media ', image_info)
-        # file_string = image_info.get('file', None)
-        # if not file_string:
-        #     raise APIException("Can not create product meida ,file bytes string is None")
-        # file_name = image_info.get('filename')
-        # file_bytes = base64.b64decode(file_string)
-        # if not file_string:
-        #     raise APIException("Must provide media file while media id is None")
-        # media = Media(
-        #     file=ImageFile(io.BytesIO(file_bytes), name=file_name),
-        #     openid=product.openid,
-        #     creater=product.creater
-        # )
-        # media.save()
-        # return media
-
-    def _delete_spec(self, data):
-        raise Exception('Improper denpendency')  # TODO
-        # id = data.get('id', None)
-        # if not id:
-        #     raise APIException('Cant not delete specification , missing id')
-        # spec = ProductSpecification.objects.get(id=id)
-        # for option in getattr(spec, ProductSpecification.RelativeFields.SPECIFICATION_OPTION).all():
-        #     option.models.clear()
-        #     option.delete()
-        # return spec.delete()
-
-    def _create_or_update_option(self, product, spec, data):
-        index = data.get('index', None)
-        name = data.get('name', None)
-        image_url = data.get('iamge', None)
-        if index is None:
-            logger.error('can not create option, missing index %s %s', spec.name, name)
-            raise APIException('Create option missing indexndex %s %s' % (spec.name, name))
-        if not name:
-            logger.error('can not create option, missing name %s', spec.name, index)
-            raise APIException('Create option missing name %s %s ' % (spec.name, index))
-        option = StoreProductOptionItemModel.objects.filter(store_product=product, store_product_option=spec, index=index).first()
-        if not option:
-            option = StoreProductOptionItemModel.objects.create(
-                openid=product.openid,
-                creater=product.creater,
-                store_product=product,
-                store_product_option=spec,
-                name=name,
-                image_url=image_url,
-                index=index
-            )
-        else:
-            option.name = name
-            option.image_url = image_url if image_url else option.image_url
-            option.save()
-        return option
+        logger.info('create prdocut media ', image_info) # TODO
 
     def get_price(self, request):
         raise Exception('Improper denpendency')  # TODO
-        # ids = request.query_params.getlist('id', [])
-        # shops = request.query_params.getlist('shop', [])
-        # logger.info('get price of product %s for shops %s ', ids, shops)
-        # if not ids or len(ids) == 0:
-        #     APIException({"detail": "Must specify product id "})
-        # price_infos = []
-        # for id in ids:
-        #     qs = GlobalProduct.objects.get(id=id)
-        #     if qs.openid != self.request.auth.openid:
-        #         raise APIException(
-        #             {"detail": "Cannot delete data which not yours"})
-        #     store_publishes = getattr(qs, GlobalProduct.RelativeFields.SHOPEE_STORE_PUBLISH).filter(Q(shop_id__in=shops)).all()
-        #     for store_publish in store_publishes:
-        #         models = None
-        #         try:
-        #             models = ProductService.get_instance()\
-        #                 .get_product_shop_price(store_publish.shop_id, store_publish.publish_id)
-        #         except Exception as exc:
-        #             logger.error('get price info for product %s of shop %s fail, %s', qs.id, store_publish.shop_id, exc)
-        #         if not models:
-        #             continue
-        #         discount_id = 0
-        #         model_price = []
-        #         for model in models:
-        #             if model.get('promotion_id', -1) > 0:
-        #                 discount_id = model['promotion_id']
-        #             model_info = {
-        #                 'current_price': model['price_info'][0]['current_price'],
-        #                 'original_price': model['price_info'][0]['original_price'],
-        #                 'discount': {'discount_id': discount_id},
-        #                 'discount_id': discount_id,
-        #                 'sku': model['model_sku'],
-        #                 'model_id': model['model_id']
-        #             }
-        #             global_model_publish = ShopeeStorePublish.objects.filter(publish_id=model['model_id']).first()
-        #             if global_model_publish:
-        #                 global_model = global_model_publish.product
-        #                 model_info['image'] = global_model.image
-        #                 stock = getattr(global_model, GlobalProduct.RelativeFields.MODEL_STOCKS).first()
-        #                 if stock:
-        #                     model_info['stock'] = {'stock_qty': stock.stock_qty, 'price': stock.price}
-        #             model_price.append(model_info)
-        #
-        #         logistic_info = getattr(qs, GlobalProduct.RelativeFields.PRODUCT_LOGISTIC).first()
-        #         supplier = getattr(qs, GlobalProduct.RelativeFields.PRODUCT_SUPPLIER).first()
-        #         price_info = {
-        #             'item_id': store_publish.publish_id,
-        #             'type': 'shopee',
-        #             'store_id': store_publish.shop_id,
-        #             'models': model_price,
-        #             'discount': {'discount_id': discount_id, 'item_list':  [{'model_list': model_price}]},
-        #             'supplier': ProductSupplierGetSerializers(supplier).data,
-        #             'logistic': ProductLogisticGetSerializers(logistic_info).data,
-        #             'id': qs.id,
-        #             'sku': qs.sku,
-        #             'image': qs.image
-        #         }
-        #         price_infos.append(price_info)
-        # return Response(price_infos, status=200, headers=self.get_success_headers(""))
 
-    def _create_or_update_category_brand(self, product, brand_info):
-        id = brand_info.get('id', None)
-        if id:
-            brand_instance = ProductCategoryBrand.objects.get(id=id)
-            serializer = ProductCategoryBrandPostSerializer(brand_instance, data=brand_info, partial=True)
-        else:
-            brand_info['creater'] = product.creater
-            brand_info['openid'] = product.openid
-            serializer = ProductCategoryBrandPostSerializer(data=brand_info)
-        if not serializer.is_valid():
-            logger.error('Fail to save category brand %s' % serializer.errors)
-            raise APIException('Fail to save category brand')
-        return serializer.save()
+    def get_shop_product(self, request, *args, **kwargs):
+        shop_ids = self.request.query_params.get('stop_id', '').split(',')
+        global_product_id = self.request.query_params.get('id', None)
+        if not global_product_id:
+            raise APIException('Missing global product id')
+        global_product = StoreProductModel.objects.get(id=global_product_id)
+        shop_products = []
+        for shop_id in shop_ids:
+            store = StoreModel.objects.get(id=shop_id)
+            shop_product = global_product.shop_products.filter(store_id=shop_id).first()
+            if not shop_product:
+                shop_product = ProductHelper.global_product_to_shop_product(global_product, store)
+            serializer = StoreShopProductDetailSerializer(shop_product, context={'request': request})
+            shop_products.append(serializer.data)
+        print(global_product.shop_products.count())
+        serializer = StoreGlobalProductListGetSerializer(global_product, context={'request': request})
+        global_product_json = serializer.data
+        global_product_json['shop_products'] = shop_products
+        return Response(global_product_json, status=200)
 
-    def _create_category_attribute(self, category, attribute_values_info):
-        logger.info('_create_or_update_category_attribute %s', attribute_values_info)
-        for attribute_value in attribute_values_info:
-            if not attribute_value.get('attribute_id', None):
-                raise APIException(
-                    'Missing attribute id for attribute value %s' % attribute_value.get('display_value_name', None))
-            if not attribute_value.get('value_id', None):
-                raise APIException(
-                    'Missing valid id for attribute value %s' % attribute_value.get('display_value_name', None))
-            if not attribute_value.get('display_value_name', None):
-                raise APIException(
-                    'Missing valid id for attribute display name %s' % attribute_value.get('attribute_id', None))
-            attribute_value['category'] = category.id
-            attribute_value['openid'] = category.openid
-            attribute_value['creater'] = category.creater
-            serializer = ProductAttributePostSerializer(data=attribute_value)
-            if not serializer.is_valid():
-                logger.error('Fail to save category attribute %s', serializer.errors)
-                raise APIException('Fail to save category attribute')
-            serializer.save()
+    @transaction.atomic
+    def update_price(self, request, *args, **kwargs):
+        shop_products = request.data
+        for shop_product in shop_products:
+            shop_product_instance = StoreProductModel.objects.get(id=shop_product['id'])
+            for variant in shop_product['variants']:
+                variant_instance = shop_product_instance.product_variant.filter(id=variant['id']).first()
+                if not variant_instance:
+                    raise APIException('Can not find variant %s ' % variant['id'])
+                variant_instance.promotion_id = variant.get('promotion_id', variant_instance.promotion_id)
+                variant_instance.save()
+                price_info = variant['price_info']
+                if not price_info:
+                    raise APIException('Variant %s missing price info' % variant['id'])
+                price_info_id = price_info.get('id', None)
+                original_price = price_info.get('original_price', None)
+                current_price = price_info.get('current_price', None)
+                if not (original_price and current_price):
+                    raise APIException('Variant %s price info original/current price not set ' % variant['id'])
+                if not price_info_id:
+                    price_info_instance = StoreProductPriceInfoModel.objects.create(
+                        openid=shop_product_instance.openid,
+                        creater=shop_product_instance.creater,
+                        store_product=shop_product_instance,
+                        type=1,
+                        variant=variant_instance,
+                        original_price=original_price,
+                        current_price=current_price,
+                    )
+                else:
+                    price_info_instance = variant_instance.variant_price.filter(id=price_info_id).first()
+                    price_info_instance.original_price = original_price
+                    price_info_instance.current_price = current_price
+                    price_info_instance.save()
+        return Response('', status=200)
+
+    @transaction.atomic
+    def publish_media(self, request, *args, **kwargs):
+        data = request.data
+        product_media = data.get('product_media', None)
+        option_media = data.get('option_media', None)
+        self._publish_product_meida(product_media)
+        self._publish_option_media(option_media)
+        return Response('success', 200)
+
+    def _publish_product_meida(self, product_media_list: []):
+        for product_media in product_media_list:
+            ProductHelper.upload_product_image(product_media)
+
+    def _publish_option_media(self, option_media_list:[]):
+        for option_media in option_media_list:
+            ProductHelper.upload_option_image(option_media)
+
+
+

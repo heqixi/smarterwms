@@ -162,6 +162,7 @@ class StockService(object):
         @model_id: 订单中商品的model_id, 如果没有提供goods_id, 这通过此字段先查询关联的产品，在通过产品查询货物
         @return StockRecord
         """
+
         goods_id = stock_bean.goods_id
         if not goods_id:
             if not (stock_bean.goods_code or stock_bean.goods_image):

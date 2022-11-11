@@ -11,7 +11,9 @@ from django.conf import settings
 from django.db import transaction
 from django.db.models import Sum
 
-
+from goods.gRpc.client.goods_service_stub import GoodsServiceClient
+from goods.gRpc.client.types.goods import CreateGroupRequest
+from goods.models import GoodsGroupRecord
 from order.common import OrderMsgType, OrderMsgMark, OrderStatus, OrderModifyType, OrderHandleStatus, OrderRecordType, \
     OrderPackageType
 from order.models import ShopeeOrderModel, ShopeeOrderDetailModel, ShopeeOrderMessageModel, ShopeeOrderModifyModel, \
@@ -349,8 +351,6 @@ class OrderService(object):
                             else:
                                 new_stock_qty = cur_stock_qty + leave_qty
                                 leave_qty -= leave_qty
-                            # self.stock_service.back_stock(detail.stock, to_reserve=True)
-                            # self.stock_service.update_stock_qty(detail.stock, new_stock_qty)
                             self.stock_service.back_stock(detail.stock, to_reserve_qty=new_stock_qty)
                 if leave_qty != 0:
                     raise ValueError('Delete Modify Error: leave_qty != 0')
@@ -1170,6 +1170,25 @@ class OrderService(object):
                         self.stock_service.update_stock_qty(order_detail.stock, 0)
                 order_detail.save()
                 tmp_map.get(model_id).append(order_detail.id)
+
+    def _sync_goods_(self, store_model_ids):
+        # store_product_model -> stor_product -> global_product -> global_product_model
+        global_product_dict = {}
+        for model_id in store_model_ids:
+            store_model = StoreProductVariantModel.objects.filter(model_id=model_id).first()
+            if not store_model:
+                continue
+            store_product = store_model.store_product
+            if not store_product:
+                continue
+            global_product = store_product.global_product
+            if not global_product_dict.get(global_product.product_id, None):
+                global_product_dict[global_product.product_id] = global_product
+        for product_id, global_product in global_product_dict.items():
+            if not GoodsGroupRecord.objects.filter(product_id=product_id).exists():
+                goods =
+                req = CreateGroupRequest(name=global_product.product_sku)
+                GoodsServiceClient.get_instance().create_group()
 
     # 保存或更新ShopeeOrder
     def save_order(self, order, data):

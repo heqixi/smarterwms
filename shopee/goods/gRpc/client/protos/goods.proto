@@ -9,6 +9,7 @@ service GoodsController {
     rpc Update(Goods) returns (Response) {}
     rpc Destroy(Goods) returns (Response) {}
     rpc Query(GoodsQueryRequest) returns (stream Goods) {}
+    rpc CreateGroup(GoodsGroup) returns (GoodsGroup) {}
 }
 
 message Goods {
@@ -26,6 +27,12 @@ message Goods {
     string goods_brand = 12;
     string goods_color = 13;
     string bar_code = 14;
+}
+
+message GoodsGroup {
+    int32 group_id = 1;
+    string group_name = 2;
+    repeated Goods goods = 3;
 }
 
 message GoodsListRequest {

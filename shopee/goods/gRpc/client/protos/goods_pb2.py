@@ -13,7 +13,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0bgoods.proto\x12\x05goods\"\x92\x02\n\x05Goods\x12\n\n\x02id\x18\x01 \x01(\x05\x12\x12\n\ngoods_code\x18\x02 \x01(\t\x12\x12\n\ngoods_name\x18\x03 \x01(\t\x12\x13\n\x0bgoods_image\x18\x04 \x01(\t\x12\x12\n\ngoods_desc\x18\x05 \x01(\t\x12\x14\n\x0cgoods_weight\x18\x06 \x01(\x02\x12\x0f\n\x07goods_w\x18\x07 \x01(\x02\x12\x0f\n\x07goods_d\x18\x08 \x01(\x02\x12\x0f\n\x07goods_h\x18\t \x01(\x02\x12\x12\n\ngoods_unit\x18\n \x01(\t\x12\x13\n\x0bgoods_class\x18\x0b \x01(\t\x12\x13\n\x0bgoods_brand\x18\x0c \x01(\t\x12\x13\n\x0bgoods_color\x18\r \x01(\t\x12\x10\n\x08\x62\x61r_code\x18\x0e \x01(\t\"\x12\n\x10GoodsListRequest\"\"\n\x14GoodsRetrieveRequest\x12\n\n\x02id\x18\x01 \x01(\x05\"\'\n\x11GoodsQueryRequest\x12\x12\n\nproduct_id\x18\x01 \x01(\t\"\x94\x02\n\x08Response\x12&\n\x06status\x18\x01 \x01(\x0e\x32\x16.goods.Response.Status\x12\x1b\n\x05goods\x18\x02 \x01(\x0b\x32\x0c.goods.Goods\x12\"\n\x04\x63ode\x18\x03 \x01(\x0e\x32\x14.goods.Response.Code\x12\x0b\n\x03msg\x18\x04 \x01(\t\"\x1f\n\x06Status\x12\x0b\n\x07SUCCESS\x10\x00\x12\x08\n\x04\x46\x41IL\x10\x01\"q\n\x04\x43ode\x12\n\n\x06UNKNOW\x10\x00\x12\x13\n\x0fGOODS_NOT_FOUND\x10\x01\x12\x16\n\x12ILLEGAL_PARAMETERS\x10\x03\x12\x16\n\x12MISSING_PARAMETERS\x10\x04\x12\x18\n\x14\x44UPLICATE_GOODS_CODE\x10\x05\x32\xb7\x02\n\x0fGoodsController\x12\x31\n\x04List\x12\x17.goods.GoodsListRequest\x1a\x0c.goods.Goods\"\x00\x30\x01\x12)\n\x06\x43reate\x12\x0c.goods.Goods\x1a\x0f.goods.Response\"\x00\x12:\n\x08Retrieve\x12\x1b.goods.GoodsRetrieveRequest\x1a\x0f.goods.Response\"\x00\x12)\n\x06Update\x12\x0c.goods.Goods\x1a\x0f.goods.Response\"\x00\x12*\n\x07\x44\x65stroy\x12\x0c.goods.Goods\x1a\x0f.goods.Response\"\x00\x12\x33\n\x05Query\x12\x18.goods.GoodsQueryRequest\x1a\x0c.goods.Goods\"\x00\x30\x01\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0bgoods.proto\x12\x05goods\"\x92\x02\n\x05Goods\x12\n\n\x02id\x18\x01 \x01(\x05\x12\x12\n\ngoods_code\x18\x02 \x01(\t\x12\x12\n\ngoods_name\x18\x03 \x01(\t\x12\x13\n\x0bgoods_image\x18\x04 \x01(\t\x12\x12\n\ngoods_desc\x18\x05 \x01(\t\x12\x14\n\x0cgoods_weight\x18\x06 \x01(\x02\x12\x0f\n\x07goods_w\x18\x07 \x01(\x02\x12\x0f\n\x07goods_d\x18\x08 \x01(\x02\x12\x0f\n\x07goods_h\x18\t \x01(\x02\x12\x12\n\ngoods_unit\x18\n \x01(\t\x12\x13\n\x0bgoods_class\x18\x0b \x01(\t\x12\x13\n\x0bgoods_brand\x18\x0c \x01(\t\x12\x13\n\x0bgoods_color\x18\r \x01(\t\x12\x10\n\x08\x62\x61r_code\x18\x0e \x01(\t\"O\n\nGoodsGroup\x12\x10\n\x08group_id\x18\x01 \x01(\x05\x12\x12\n\ngroup_name\x18\x02 \x01(\t\x12\x1b\n\x05goods\x18\x03 \x03(\x0b\x32\x0c.goods.Goods\"\x12\n\x10GoodsListRequest\"\"\n\x14GoodsRetrieveRequest\x12\n\n\x02id\x18\x01 \x01(\x05\"\'\n\x11GoodsQueryRequest\x12\x12\n\nproduct_id\x18\x01 \x01(\t\"\x94\x02\n\x08Response\x12&\n\x06status\x18\x01 \x01(\x0e\x32\x16.goods.Response.Status\x12\x1b\n\x05goods\x18\x02 \x01(\x0b\x32\x0c.goods.Goods\x12\"\n\x04\x63ode\x18\x03 \x01(\x0e\x32\x14.goods.Response.Code\x12\x0b\n\x03msg\x18\x04 \x01(\t\"\x1f\n\x06Status\x12\x0b\n\x07SUCCESS\x10\x00\x12\x08\n\x04\x46\x41IL\x10\x01\"q\n\x04\x43ode\x12\n\n\x06UNKNOW\x10\x00\x12\x13\n\x0fGOODS_NOT_FOUND\x10\x01\x12\x16\n\x12ILLEGAL_PARAMETERS\x10\x03\x12\x16\n\x12MISSING_PARAMETERS\x10\x04\x12\x18\n\x14\x44UPLICATE_GOODS_CODE\x10\x05\x32\xee\x02\n\x0fGoodsController\x12\x31\n\x04List\x12\x17.goods.GoodsListRequest\x1a\x0c.goods.Goods\"\x00\x30\x01\x12)\n\x06\x43reate\x12\x0c.goods.Goods\x1a\x0f.goods.Response\"\x00\x12:\n\x08Retrieve\x12\x1b.goods.GoodsRetrieveRequest\x1a\x0f.goods.Response\"\x00\x12)\n\x06Update\x12\x0c.goods.Goods\x1a\x0f.goods.Response\"\x00\x12*\n\x07\x44\x65stroy\x12\x0c.goods.Goods\x1a\x0f.goods.Response\"\x00\x12\x33\n\x05Query\x12\x18.goods.GoodsQueryRequest\x1a\x0c.goods.Goods\"\x00\x30\x01\x12\x35\n\x0b\x43reateGroup\x12\x11.goods.GoodsGroup\x1a\x11.goods.GoodsGroup\"\x00\x62\x06proto3')
 
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'goods_pb2', globals())
@@ -22,18 +22,20 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   DESCRIPTOR._options = None
   _GOODS._serialized_start=23
   _GOODS._serialized_end=297
-  _GOODSLISTREQUEST._serialized_start=299
-  _GOODSLISTREQUEST._serialized_end=317
-  _GOODSRETRIEVEREQUEST._serialized_start=319
-  _GOODSRETRIEVEREQUEST._serialized_end=353
-  _GOODSQUERYREQUEST._serialized_start=355
-  _GOODSQUERYREQUEST._serialized_end=394
-  _RESPONSE._serialized_start=397
-  _RESPONSE._serialized_end=673
-  _RESPONSE_STATUS._serialized_start=527
-  _RESPONSE_STATUS._serialized_end=558
-  _RESPONSE_CODE._serialized_start=560
-  _RESPONSE_CODE._serialized_end=673
-  _GOODSCONTROLLER._serialized_start=676
-  _GOODSCONTROLLER._serialized_end=987
+  _GOODSGROUP._serialized_start=299
+  _GOODSGROUP._serialized_end=378
+  _GOODSLISTREQUEST._serialized_start=380
+  _GOODSLISTREQUEST._serialized_end=398
+  _GOODSRETRIEVEREQUEST._serialized_start=400
+  _GOODSRETRIEVEREQUEST._serialized_end=434
+  _GOODSQUERYREQUEST._serialized_start=436
+  _GOODSQUERYREQUEST._serialized_end=475
+  _RESPONSE._serialized_start=478
+  _RESPONSE._serialized_end=754
+  _RESPONSE_STATUS._serialized_start=608
+  _RESPONSE_STATUS._serialized_end=639
+  _RESPONSE_CODE._serialized_start=641
+  _RESPONSE_CODE._serialized_end=754
+  _GOODSCONTROLLER._serialized_start=757
+  _GOODSCONTROLLER._serialized_end=1123
 # @@protoc_insertion_point(module_scope)

@@ -17,7 +17,6 @@
       <q-card-section class="scroll">
         <GoodsSupplierInfo
           :supplier="product.supplier"
-          @onChange="onSupplierInfoChange"
         />
         <q-separator dark vertical inset/>
 
@@ -115,7 +114,10 @@ export default {
         desc: '',
         second_hand: false,
         supplier: {
-          url: '123'
+          url: '123',
+          supplier_name: undefined,
+          logistics_costs: undefined,
+          min_purchase_num: undefined,
         },
         specifications: [],
         status: 'ED',
@@ -144,16 +146,6 @@ export default {
         }
       }
     },
-    onSupplierInfoChange (value, field) {
-      this.product.supplier[field] = value
-      this.product.supplier.update = true
-      console.log('on supplier info change ', this.product.supplier)
-    },
-    // onLogisticInfoChange (value, field) {
-    //   console.log('on logistic change ', value, field)
-    //   this.product.logistic[field] = value
-    //   this.product.logistic.update = true
-    // },
     onSpecificationRemove (spec) {
       console.log('on Spec remove ', spec)
       if (!this.product.removeSpecification) {
@@ -197,6 +189,7 @@ export default {
         logistics_costs: this.product.supplier.logistics_costs,
         min_purchase_num: this.product.supplier.min_purchase_num,
         delivery_days: this.product.supplier.delivery_days,
+        supplier_name: this.product.supplier.supplier_name,
         product: this.productId.id
       }
     },
@@ -205,7 +198,8 @@ export default {
       this.product.images.forEach((image, index) => {
         formData.images.push({
           url: image.url,
-          index: index
+          index: index,
+          image_id: image.image_id
         })
       })
     },
@@ -310,15 +304,15 @@ export default {
       console.log('newDataCancel')
       this.hide()
     },
-    async newDataSubmit (publishStore) {
+    async newDataSubmit () {
       console.log('newDataSubmit')
       var _this = this
-      const product2Save = { id: this.product.id, publish: publishStore }
+      const product2Save = { id: this.product.id }
       if (_this.product.status === 'ED') {
         if (_this.isReadyToPublish()) {
           console.log('product is ready to publish ')
-          product2Save.status = 'PR'
-          _this.product.status = 'PR'
+          product2Save.status = 'PUBLISH_READY'
+          _this.product.status = 'PUBLISH_READY'
         }
       }
       this.loading = true
@@ -348,7 +342,6 @@ export default {
         product2Save.merchant = {
           id: _this.currentMerchant.id
         }
-        product2Save.global_product_id = this.productId
       }
       console.log('new data summit ', product2Save)
       product2Save.creater = this.login_name
@@ -554,7 +547,7 @@ export default {
         return
       }
       const image2Fetch = product2Save.images.filter(image => {
-        return image.url && !image.media && !image.is_delete
+        return image.url && !image.image_id
       })
       if (image2Fetch.length <= 0) {
         return
@@ -569,7 +562,6 @@ export default {
       const result = await mediaService.imgUrlToFile(images[i].url)
       images[i].file = result.fileBytes
       images[i].filename = result.filename
-      images[i].update = true
       await this.fetchImageRecursive(images, i + 1)
     },
     show () {
@@ -583,22 +575,11 @@ export default {
         if (this.currentMerchant.platform === 1) {
           this.getShopeeProductInfo(productId, this.currentMerchant)
         }
-      } else {
-        this.getGlobalProductInfo(productId)
       }
-    },
-    getGlobalProductInfo (productId) {
-      var _this = this
-      const queryParam = '?models=true&images=true&images_options=true&model_options=true&product_specification=true&product_media=true&product_supplier=true&product_logistic=true&product_category=true'
-      getauth('product/' + productId + '/' + queryParam).then(product => {
-        _this.unwrapProductInfo(product)
-      }).catch(err => {
-        console.log('get global product info fail ', err)
-      })
     },
     getShopeeProductInfo (productId, store, force = false) {
       var _this = this
-      const path = `shopee/publish/product?global_product_id=${productId}&store_id=${store.id}&force=${force}`
+      const path = `shopee/publish/product/${productId}/`
       _this.loading = true
       getauth(path).then(product => {
         if (!product) {
@@ -625,6 +606,11 @@ export default {
     },
     unwrapShopeeProductInfo (product, store) {
       console.log('shopee product', product)
+      this.product.id = product.id
+      this.product.supplier.url = product.supplier_info.url
+      this.product.supplier.supplier_name = product.supplier_info.supplier_name
+      this.product.supplier.logistics_costs = product.supplier_info.logistics_costs
+      this.product.supplier.min_purchase_num = product.supplier_info.min_purchase_num
       this.product.logistic.product_w = product.width
       this.product.logistic.product_h = product.height
       this.product.logistic.product_d = product.length
@@ -638,7 +624,8 @@ export default {
       }).map(image => {
         return {
           index: image.index,
-          url: image.url
+          url: image.url,
+          image_id: image.image_id
         }
       }).sort((x, y) => { return x.index - y.index })
 
@@ -683,6 +670,9 @@ export default {
           name: variant.model_sku,
           options: variant.option_item_index.split(',').map((optIndex, index) => {
             const option = product.specifications[index].options.find(opt => { return opt.index + '' === optIndex })
+            if (!option) {
+              console.log('product option_item_index ', variant.option_item_index, product.specifications)
+            }
             option.specification = product.specifications[index]
             return option
           }),
@@ -695,56 +685,16 @@ export default {
       }).sort((x, y) => { return x.option_item_index - y.option_item_index })
       console.log('this product ', this.product)
     },
-    unwrapProductInfo (product) {
-      console.log('get product before ', product)
-      if (product.desc && product.desc.length > 0) {
-        product.desc = product.desc.replaceAll('\n', '</br>')
-      }
-      if (!product.logistic) {
-        product.logistic = {
-          product_w: undefined,
-          product_h: undefined,
-          product_d: undefined,
-          weight: undefined,
-          days_deliver: 3
-        }
-      }
-      this.product.baseInfo.desc = product.desc.replaceAll('\n', '</br>')
-      this.product.baseInfo.name = product.name
-      this.product.baseInfo.sku = product.sku
-
-      this.product.images = product.images
-      this.product.category = undefined
-
-      this.product.specifications = product.specifications.sort((specA, specB) => {
-        return specA.index - specB.index
-      })
-      this.product.specifications.forEach(spec => {
-        spec.options.sort((optA, optB) => {
-          return (optA.specification.index * 100 + optA.index) - (optB.specification.index * 100 + optB.index)
-        })
-      })
-
-      this.product.models = product.models
-      this.product.models.forEach(model => {
-        model.options.sort((optA, optB) => {
-          return (optA.specification.index * 100 + optA.index) - (optB.specification.index * 100 + optB.index)
-        })
-      })
-      this.product.models.sort((modelA, modelB) => {
-        return modelA.options.reduce((index, option) => { return index + option.index + option.specification.index }, '') -
-          modelB.options.reduce((index, option) => { return index + option.index + option.specification.index }, '')
-      })
-    }
   },
   created () {
     var _this = this
+    this.currentMerchant = this.merchant
     if (this.productId) {
       console.log('on new product Dialog on create ', this.productId)
       _this.getProductInfo(this.productId)
     }
   },
-  props: ['productId'],
+  props: ['productId', 'merchant'],
   components:
     {
       GoodsImageInfo,

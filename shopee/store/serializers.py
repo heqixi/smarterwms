@@ -42,9 +42,13 @@ class StoreProductListGetSerializer(serializers.ModelSerializer):
     def get_fields(self):
         fields = super().get_fields()
         store_details = self.context['request'].query_params.get('shopee_store', None)
+        models = self.context['request'].query_params.get('models', None)
         if store_details:
             store = StoreListGetSerializer()
             fields['store'] = store
+        if models:
+            models = StoreProductVariantListGetSerializer(many=True, source='product_variant')
+            fields['models'] = models
         return fields
 
     class Meta:
@@ -59,11 +63,45 @@ class StoreGlobalProductListGetSerializer(serializers.ModelSerializer):
 
     def get_fields(self):
         fields = super().get_fields()
-        is_shopee_store_products = self.context['request'].query_params.get('store_products', None)
-        if is_shopee_store_products:
-            shopee_store_products = StoreProductListGetSerializer(many=True)
-            fields['store_products'] = shopee_store_products
+        store_detail = self.context['request'].query_params.get('store_detail', None)
+        is_models = self.context['request'].query_params.get('models', None)
+        supplier_info = self.context['request'].query_params.get('supplier_info', None)
+        product_medias = self.context['request'].query_params.get('product_medias', None)
+        option = self.context['request'].query_params.get('options', None)
+        if store_detail:
+            store = StoreListGetSerializer()
+            fields['store'] = store
+        if is_models:
+            variants = StoreProductVariantListGetSerializer(many=True, source='product_variant')
+            fields['variants'] = variants
+        if supplier_info:
+            supplier_info = serializers.SerializerMethodField('get_supplier_info')
+            fields['supplier_info'] = supplier_info
+        if product_medias:
+            medias = serializers.SerializerMethodField('get_product_medias')
+            fields['medias'] = medias
+        if option:
+            options = serializers.SerializerMethodField('get_options')
+            option_items = serializers.SerializerMethodField('get_option_items')
+            fields['options'] = options
+            fields['option_items'] = option_items
         return fields
+
+    def get_supplier_info(self, obj):
+        suppler_info = obj.supplier_info.first()
+        return spg.django_model_to_dict(model=suppler_info)
+
+    def get_product_medias(self, obj: StoreProductModel):
+        media_list = obj.product_media.all()
+        return spg.django_model_to_dict(model_list=media_list)
+
+    def get_option_items(self, obj: StoreProductModel):
+        option_items = obj.product_option_item.all()
+        return spg.django_model_to_dict(model_list=option_items)
+
+    def get_options(self, obj: StoreProductModel):
+        options = obj.product_option.all()
+        return spg.django_model_to_dict(model_list=options)
 
     class Meta:
         model = StoreProductModel
@@ -76,11 +114,13 @@ class StoreProductVariantListGetSerializer(serializers.ModelSerializer):
     product_name = serializers.SerializerMethodField()
     product_sku = serializers.SerializerMethodField()
     image = serializers.SerializerMethodField()
+    price_info = serializers.SerializerMethodField()
 
     def get_image(self, obj):
         index = obj.option_item_index.split(',')[0]
+        option = obj.store_product.product_option.filter(index=0).first()
         first_option_item = StoreProductOptionItemModel.objects.filter(
-            store_product=obj.store_product, index=index).first()
+            store_product=obj.store_product, index=index, store_product_option=option).first()
         return first_option_item.image_url if first_option_item else None
 
     def get_product_id(self, obj):
@@ -91,6 +131,16 @@ class StoreProductVariantListGetSerializer(serializers.ModelSerializer):
 
     def get_product_sku(self, obj):
         return obj.store_product.product_sku
+
+    def get_price_info(self, obj: StoreProductVariantModel):
+        price_info_model = obj.variant_price.first()
+        if not price_info_model:
+            return {}
+        return {
+            'original_price': price_info_model.original_price,
+            'current_price': price_info_model.current_price,
+            'currency': price_info_model.currency
+        }
 
     class Meta:
         model = StoreProductVariantModel
@@ -128,6 +178,7 @@ class StoreShopProductDetailSerializer(serializers.ModelSerializer):
     medias = serializers.SerializerMethodField()
     price_info = serializers.SerializerMethodField()
     category = serializers.SerializerMethodField()
+    supplier_info = serializers.SerializerMethodField()
 
     def get_store(self, obj):
         return spg.django_model_to_dict(model=obj.store)
@@ -150,6 +201,12 @@ class StoreShopProductDetailSerializer(serializers.ModelSerializer):
 
     def get_medias(self, obj):
         return spg.django_model_to_dict(model_list=obj.product_media.all())
+
+    def get_supplier_info(self, obj):
+        suppler_info = obj.supplier_info.first()
+        if suppler_info:
+            return spg.django_model_to_dict(model=suppler_info)
+        return {}
 
     def get_category(self, product: StoreProductModel):
         instance = getattr(product, StoreProductModel.RelativeFields.PRODUCT_CATEGORY).first()

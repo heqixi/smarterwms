@@ -1,7 +1,7 @@
 from django.http import StreamingHttpResponse, JsonResponse
 from django.conf import settings
 from wsgiref.util import FileWrapper
-from rest_framework.exceptions import APIException
+
 import mimetypes, os
 
 baseurl = 'https://production.56yhz.com/media/'

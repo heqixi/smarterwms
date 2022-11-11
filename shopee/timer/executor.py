@@ -78,10 +78,12 @@ class AsyncSchedulerExecutor(SchedulerExecutor):
     def register(self, task: Task):
         if task is None:
             raise ValueError('Task can not be None')
+        logger.info('background executor register task %s', task.job_id())
         self.scheduler.add_job(id=task.job_id(), func=task.do_exec, **task.trigger_args())
         return self
 
     def remove(self, job_id):
+        print('Remove job ', job_id)
         self.scheduler.remove_job(job_id)
 
     def stop(self, job_id):
@@ -97,11 +99,15 @@ class AsyncSchedulerExecutor(SchedulerExecutor):
         loop.run_forever()
 
     def start(self):
-        if len(self.scheduler.get_jobs()) > 0 and not sys.argv[0].endswith('manage.py'):
+        print('sys args ', sys.argv)
+        if len(self.scheduler.get_jobs()) > 0 and sys.argv[1] not in ['makemigrations', 'migrate']:
             threading.Thread(target=self.__start, args=()).start()
             print('Asyncio scheduler started')
+        else:
+            print('Asyncio scheduler not started')
 
     def shutdown(self):
+        print('Task scheduler shutdown')
         self.scheduler.shutdown()
 
 

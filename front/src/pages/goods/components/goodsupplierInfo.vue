@@ -6,7 +6,7 @@
         <div class="col-9">
           <q-input
             dense
-            v-model="supplierInfo.url.value"
+            v-model="supplier.url"
             label="链接"
             :rules="[val => (val && val.length > 0) || error1]"
             @blur="save('url')">
@@ -23,7 +23,20 @@
         <div class="col-3">
           <q-input
             dense
-            v-model="supplierInfo.logistics_costs.value"
+            v-model="supplier.supplier_name"
+            @blur="save('logistics_costs')">
+            <template v-slot:before class="q-mb-sm">
+              <span v-if="supplierInfo.supplier_name.require" :style="{color:'red', fontSize:'8px'}"> * </span>
+              <div class="text-body2">
+                {{supplierInfo.supplier_name.label}}
+              </div>
+            </template>
+          </q-input>
+        </div>
+        <div class="col-3">
+          <q-input
+            dense
+            v-model="supplier.logistics_costs"
             @blur="save('logistics_costs')">
             <template v-slot:before class="q-mb-sm">
               <span v-if="supplierInfo.logistics_costs.require" :style="{color:'red', fontSize:'8px'}"> * </span>
@@ -36,7 +49,7 @@
         <div class="col-3 q-pl-lg">
           <q-input
             dense
-            v-model="supplierInfo.min_purchase_num.value"
+            v-model="supplier.min_purchase_num"
             @blur="save('min_purchase_num')">
             <template v-slot:before class="q-mb-sm">
               <span v-if="supplierInfo.min_purchase_num.require" :style="{color:'red', fontSize:'8px'}"> * </span>
@@ -49,7 +62,7 @@
         <div class="col-3 q-pl-lg">
           <q-input
             dense
-            v-model="supplierInfo.delivery_days.value"
+            v-model="supplier.delivery_days"
             @blur="save('delivery_days')">
             <template v-slot:before class="q-mb-sm">
               <span v-if="supplierInfo.min_purchase_num.require" :style="{color:'red', fontSize:'8px'}"> * </span>
@@ -74,6 +87,11 @@ export default {
           value: '',
           require: true,
           label: '商品源'
+        },
+        supplier_name: {
+          value: '',
+          require: false,
+          label: '供应商名称'
         },
         logistics_costs: {
           value: '',

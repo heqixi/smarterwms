@@ -3,13 +3,14 @@ import threading
 import traceback
 
 from django.conf import settings
+from django.db import transaction
 from django.http import HttpResponseRedirect, HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
 from rest_framework.filters import OrderingFilter
 from rest_framework.response import Response
 
-from store.services.fetchservice import FetchService # TODO
+from store.services.fetchservice import FetchService
 from store.common import StoreType, StoreStatus
 from store.models import StoreModel, StoreProductModel, StoreProductVariantModel, StoreProductPackageModel, \
     ShopeeRegionSettingsModel, ShopeeStoreRegionSetting
@@ -127,6 +128,7 @@ class StoreGlobalProduct(viewsets.ModelViewSet):
             return StoreGlobalProductListGetSerializer
         else:
             return StoreProductVariantListGetSerializer
+
     def get_queryset(self):
         params = spg.parse_params(self.request)
         query_type = params.get('type')
@@ -134,10 +136,12 @@ class StoreGlobalProduct(viewsets.ModelViewSet):
         merchant_id = params.get('merchant_id')
         global_item_sku = params.get('global_item_sku')
         global_item_id = params.get('global_item_id')
+        product_status = params.get('product_status')
         ordering = ordering if ordering is not None else '-id'
         if query_type == '1':
             kwargs = {
-                'store__type': StoreType.MERCHANT
+                'store__type': StoreType.MERCHANT,
+                'is_delete': False
             }
             if merchant_id:
                 kwargs['store__uid'] = merchant_id
@@ -145,10 +149,12 @@ class StoreGlobalProduct(viewsets.ModelViewSet):
                 kwargs['product_sku__contains'] = global_item_sku
             if global_item_id:
                 kwargs['product_id'] = global_item_id
+            if product_status:
+                kwargs['product_status__in'] = product_status.split(',')
             return StoreProductModel.objects.filter(**kwargs).order_by(ordering)
         else:
             kwargs = {
-                'store_product__store__type': StoreType.MERCHANT
+                'store_product__store__type': StoreType.MERCHANT,
             }
             if merchant_id:
                 kwargs['store_product__store__uid'] = merchant_id
@@ -267,6 +273,20 @@ class StoreGlobalProduct(viewsets.ModelViewSet):
         image_info = ProductService.get_instance().upload_image(image, scene)
         return HttpResponse(image_info, status=200)
 
+    @transaction.atomic
+    def delete(self, request, *args, **kwargs):
+        openid = self.request.META.get('HTTP_TOKEN')
+        for id in request.data:
+            global_product = StoreProductModel.objects.filter(id=id).first()
+            if global_product.openid != openid:
+                return HttpResponse('Can not delete product which is not yours', status=500)
+            global_product.is_delete = True
+            for variant in global_product.product_variant.all():
+                variant.is_delete = True
+                variant.save()
+            global_product.save()
+        return HttpResponse('success', status=200)
+
 
 class StoreProduct(viewsets.ModelViewSet):
     """
@@ -291,7 +311,7 @@ class StoreProduct(viewsets.ModelViewSet):
         shop_id = params.get('shop_id')
         item_sku = params.get('item_sku')
         item_id = params.get('item_id')
-        ordering = params.get('ordering')
+        ordering = params.get('ordering', '-id')
         if query_type == '1':
             kwargs = {
                 'store__type': StoreType.SHOP

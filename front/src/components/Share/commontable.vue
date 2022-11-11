@@ -623,7 +623,6 @@ export default {
       this.editValue = undefined
     },
     _onSubFieldModelUpdated (row, subRow, subCol, newVale) {
-      console.log('sub col model value update ', newVale)
       this.editSubValue = newVale
     },
     _onLeafFieldModelUpdated (newVale) {
@@ -642,7 +641,7 @@ export default {
         leafCol.onUpdate(row, subRow, leafRow, _this.editLeafValue).then(newValue => {
           console.log('common table receive new update data', newValue)
           if (leafCol.setter) {
-            console.log('_onSubFieldUpdated, setter ')
+            console.log('_onSubFieldUpdated has onUpdate, setter ', newValue)
             leafCol.setter(leafRow, newValue)
           } else {
             _this.$set(leafRow, leafCol.field, newValue)
@@ -654,7 +653,7 @@ export default {
         })
       } else {
         if (leafCol.setter) {
-          console.log('_onSubFieldUpdated, setter ')
+          console.log('_onSubFieldUpdated no onUpdate, setter ', _this.editSubValue)
           leafCol.setter(leafRow, _this.editSubValue)
         } else {
           leafRow[leafCol.field] = _this.editSubValue
@@ -675,11 +674,10 @@ export default {
         subCol.onUpdate(row, subRow, _this.editSubValue).then(newValue => {
           console.log('common table receive new update data', newValue)
           if (subCol.setter) {
-            console.log('_onSubFieldUpdated, setter ')
+            console.log('_onSubFieldUpdated has on update, setter ')
             subCol.setter(subRow, newValue)
           } else {
             _this.$set(subRow, subCol.field, newValue)
-            // subRow[subCol.field] = newValue
           }
         }).finally(() => {
           this.editSubColName = ''
@@ -688,7 +686,7 @@ export default {
         })
       } else {
         if (subCol.setter) {
-          console.log('_onSubFieldUpdated, setter ')
+          console.log('_onSubFieldUpdated no onUpdate, setter ')
           subCol.setter(subRow, _this.editSubValue)
         } else {
           subRow[subCol.field] = _this.editSubValue

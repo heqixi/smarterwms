@@ -21,6 +21,7 @@ urlpatterns = [
     path(r'product/discount', views.StoreProduct.as_view({"post": "update_discount"}), name="update_discount"),
     # Global Product
     path(r'global/', views.StoreGlobalProduct.as_view({"get": "list"}), name="global_product"),
+    path(r'global/delete', views.StoreGlobalProduct.as_view({"post": "delete"}), name="delete_global_product"),
     path(r'global/sync', views.StoreGlobalProduct.as_view({"post": "sync_global"}), name="sync_global_product"),
     path(r'global/update/global_sku', views.StoreGlobalProduct.as_view({"post": "update_global_sku"}), name="update_global_sku"),
     path(r'global/update/model_sku', views.StoreGlobalProduct.as_view({"post": "update_model_sku"}), name="update_model_sku"),
@@ -36,7 +37,7 @@ urlpatterns = [
     path(r'package/new', views.StoreProductPackage.as_view({"post": "new_package"}), name="new_package"),
     path(r'package/remove', views.StoreProductPackage.as_view({"delete": "remove_package"}), name="remove_package"),
     path(r'area', views.RegionSettings.as_view({'get': 'list', 'post': 'create', 'delete': 'destroy'}),
-         name="area_list") # TODO 前端需要修改页面
+         name="area_list")
 ]
 
 

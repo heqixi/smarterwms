@@ -57,7 +57,7 @@ export default {
           label: '图片',
           align: 'center',
           type: 'image',
-          field: 'image',
+          field: 'image_url',
           style: {
             width: '50px',
             height: '50px'
@@ -69,7 +69,7 @@ export default {
           label: 'SKU',
           align: 'center',
           type: 'text',
-          field: 'sku',
+          field: 'product_sku',
           style: {
             width: '80px',
             maxWidth: '100px',
@@ -82,13 +82,13 @@ export default {
           label: '店铺信息',
           align: 'center',
           type: 'text',
-          field: 'self',
+          field: 'store',
           style: {
             width: '100px',
             whiteSpace: 'normal'
           },
-          fieldMap: priceInfo => {
-            return priceInfo.type + '-' + priceInfo.area + '-' + priceInfo.store_name
+          fieldMap: store => {
+            return store.area + '-' + store.name
           }
         },
         {
@@ -96,7 +96,7 @@ export default {
           label: '变体价格信息',
           type: 'table',
           height: '200px',
-          field: 'models',
+          field: 'variants',
           rowKey: 'model_id',
           align: 'center',
           rowHeight: 55,
@@ -109,7 +109,7 @@ export default {
               label: '变体图片',
               align: 'center',
               type: 'image',
-              field: 'image',
+              field: 'image_url',
               class: 'col-2'
             },
             {
@@ -118,7 +118,7 @@ export default {
               label: 'SKU',
               align: 'center',
               type: 'text',
-              field: 'sku',
+              field: 'model_sku',
               class: 'col-3'
             },
             {
@@ -127,10 +127,11 @@ export default {
               label: '折前价',
               align: 'center',
               type: 'number',
-              field: 'original_price',
+              field: 'price_info',
+              fieldMap: priceInfo => { return priceInfo.original_price },
               edit: _this.editOriginalPrice === true,
               class: 'col-2',
-              onUpdate: (priceInfo, editModel, newPrice) => {
+              onUpdate: (shopProduct, editModel, newPrice) => {
                 console.log('on update origin price ', newPrice)
                 const newPriceNumber = parseFloat(newPrice)
                 return new Promise((resolve, reject) => {
@@ -148,7 +149,7 @@ export default {
                     })
                     reject('')
                   } else {
-                    editModel.original_price = newPriceNumber
+                    editModel.price_info.global_price = newPriceNumber
                     resolve(newPriceNumber)
                     console.log('after update  origin price ', editModel)
                   }
@@ -174,10 +175,11 @@ export default {
               label: '当前售价',
               align: 'center',
               type: 'text',
-              field: 'current_price',
+              field: 'price_info',
+              fieldMap: priceInfo => { return priceInfo.current_price },
               class: 'col-2',
               edit: true,
-              onUpdate: (priceInfo, editModel, newPrice) => {
+              onUpdate: (shopProduct, editModel, newPrice) => {
                 const newPriceNumber = parseFloat(newPrice)
                 if (isNaN(newPriceNumber)) {
                   _this.$q.notify({
@@ -187,14 +189,12 @@ export default {
                   })
                   return
                 }
-                if (priceInfo.discount === undefined
-                  || priceInfo.discount.discount_id === undefined
-                  || priceInfo.discount.discount_id <= 0) {
-                  return _this.getDiscountListAndUpdate(priceInfo).then(res => {
-                    return _this.editModelPrice(priceInfo, editModel, newPriceNumber)
+                if (!shopProduct.promotion_id) {
+                  return _this.getDiscountListAndUpdate(shopProduct).then(res => {
+                    return _this.editVariantPrice(shopProduct, editModel, newPriceNumber)
                   })
                 } else {
-                  return _this.editModelPrice(priceInfo, editModel, newPriceNumber)
+                  return _this.editVariantPrice(shopProduct, editModel, newPriceNumber)
                 }
               }
             },
@@ -219,9 +219,9 @@ export default {
     hide () {
       this.$refs.dialog.hide()
     },
-    editDiscountBatch (selectPriceInfo) {
+    editDiscountBatch (selectProducts) {
       var _this = this
-      if (selectPriceInfo.length <= 0) {
+      if (selectProducts.length <= 0) {
         _this.$q.notify({
           message: '至少选择一组商品',
           icon: 'close',
@@ -229,14 +229,13 @@ export default {
         })
         return
       }
-      const profitSettings = _this.getProfitSettings(selectPriceInfo[0])
-      console.log('editDiscountBatch selectPriceInfo ', selectPriceInfo[0])
+      const profitSettings = _this.getProfitSettings(selectProducts[0])
+      console.log('editDiscountBatch selectPriceInfo ', selectProducts[0])
       _this.$q.dialog({
         component: ProfitCalculatorDialog,
         data: profitSettings,
-        store: selectPriceInfo[0].store.uid
+        store: selectProducts[0].store.uid
       }).onOk((priceAndProfit) => {
-        console.log('on ok priceAndProfit ', priceAndProfit)
         const currentPrice = parseFloat(priceAndProfit.price)
         if (currentPrice < 0) {
           _this.$q.notify({
@@ -246,91 +245,63 @@ export default {
           })
           return
         }
-        selectPriceInfo.forEach(priceInfo => {
-          if (priceInfo.discount === undefined
-            || priceInfo.discount.discount_id === undefined
-            || priceInfo.discount.discount_id <= 0) {
-            _this.getDiscountListAndUpdate(priceInfo).then(res => {
-              console.log('discount choise , now update price ', priceInfo)
-              priceInfo.models.forEach(model => {
-                if (_this.editOriginalPrice && model.discount_percentage < 1) {
-                  _this.$set(model, 'original_price', (currentPrice / (1 - model.discount_percentage)).toFixed(0))
-                }
-                _this.editModelPrice(priceInfo, model, currentPrice)
-                model.current_price = currentPrice
+        selectProducts.forEach(product => {
+          if (!product.promotion_id) {
+            _this.getDiscountListAndUpdate(product).then(res => {
+              console.log('discount choise , now update price ', product)
+              product.variants.forEach(variant => {
+                _this.editVariantPrice(product, variant, currentPrice)
               })
             })
           } else {
-            priceInfo.models.forEach(model => {
-              if (_this.editOriginalPrice && model.discount_percentage < 1) {
-                _this.$set(model, 'original_price', (currentPrice / (1 - model.discount_percentage)).toFixed(0))
-              }
-              _this.editModelPrice(priceInfo, model, currentPrice)
-              model.current_price = currentPrice
+            product.variants.forEach(variant => {
+              _this.editVariantPrice(product, variant, currentPrice)
             })
           }
         })
       })
     },
-    getProfitSettings (productInfo) {
+    getProfitSettings (shopProduct) {
       const setting = {
         logistics_costs: 0,
         price: 0,
         weight: 0
       }
-      if (productInfo.supplier) {
-        setting.logistics_costs = productInfo.supplier.logistics_costs
+      if (shopProduct.supplier_info) {
+        setting.logistics_costs = shopProduct.supplier_info.logistics_costs
       }
-      if (productInfo.logistic) {
-        setting.weight = productInfo.logistic.weight
-      }
-      productInfo.models.forEach(model => {
-        if (model.stock && model.stock.price > setting.price) {
-          setting.price = model.stock.price
+      setting.weight = shopProduct.weight
+      shopProduct.variants.forEach(model => {
+        if (model.price_info.global_price > setting.price) {
+          setting.price = model.price_info.global_price
         }
       })
       return setting
     },
-    editModelPrice (priceInfo, editModel, newPrice) {
-      var _this = this
-      if (newPrice >= editModel.original_price) {
+    editVariantPrice (product, variant, currentPrice) {
+      const _this = this
+      if (_this.editOriginalPrice && variant.discount_percentage < 1) {
+        _this.$set(variant.price_info, 'original_price', (currentPrice / (1 - variant.discount_percentage)).toFixed(0))
+      }
+      if (currentPrice < variant.price_info.original_price) {
+        _this.$set(variant.price_info, 'current_price', currentPrice)
+      } else {
         this.$q.notify({
           message: '不能高于原价',
           icon: 'close',
           color: 'negative'
         })
-        return new Promise((resolve, reject) => {
-          resolve(editModel.current_price)
-        })
       }
-      return new Promise((resolve, reject) => {
-        const discountId = editModel.discount_id
-        if (discountId > 0) { // 表示有折扣
-          priceInfo.discount.item_list[0].model_list.forEach(model => {
-            if (model.model_id === editModel.model_id) {
-              model.model_promotion_price = newPrice
-              model.update = true
-              editModel.current_price = newPrice
-            }
-          })
-        } else {
-          priceInfo.discount.item_list[0].model_list.push({
-            model_id: editModel.model_id,
-            model_original_price: editModel.original_price,
-            model_promotion_price: newPrice,
-            add: true
-          })
-          editModel.current_price = newPrice
-        }
-        resolve(newPrice)
-        _this.updateModelProfit(priceInfo, editModel)
+      _this.updateModelProfit(product, variant)
+      return new Promise(resolve => {
+        resolve(variant.price_info)
       })
     },
-    getDiscountListAndUpdate (priceInfo) {
+    getDiscountListAndUpdate (product) {
       var _this = this
       return new Promise((resolve, reject) => {
         _this.loading = true
-        getauth('/store/discounts/?store_id=' + priceInfo.store_id, {}).then(discountList => {
+        getauth('/store/discounts/?store_id=' + product.store.uid, {}).then(discountList => {
           this.loading = false
           console.log('get store discount ', discountList)
           const formItems = [
@@ -352,38 +323,23 @@ export default {
             newFormItems: formItems
           }).onOk(() => {
             console.log('on discount chose ', _this.selectedFormData)
-            priceInfo.discount = {
-              discount_id: _this.selectedFormData.discount.discount_id,
-              discount_name: _this.selectedFormData.discount.discount_name,
-              add: true,
-              item_list: [
-                {
-                  item_id: priceInfo.item_id,
-                  purchase_limit: 0, // 默认无购买限制
-                  model_list: [
-                    // {
-                    //   model_id: editModel.model_id,
-                    //   model_original_price: editModel.original_price,
-                    //   model_promotion_price: newPrice,
-                    //   add: true
-                    // }
-                  ]
-                }
-              ]
-            }
-            resolve(priceInfo.discount)
+            product.promotion_id = _this.selectedFormData.discount.discount_id
+            product.variants.forEach(variant => { variant.promotion_id = product.promotion_id })
+            resolve(product)
           })
         })
       })
     },
     updateModelProfit (product, model) {
       var _this = this
-      if (product.store.profit_setting && product.supplier && product.logistic) {
+      if (product.store.profit_setting && product.supplier_info) {
         const calculate = JSON.parse(JSON.stringify(product.store.profit_setting))
-        const profit = profitService.getNetProfit(calculate, model.current_price, 1,
-          product.logistic.weight, model.stock.price, product.supplier.logistics_costs).toFixed(2)
+        const profit = profitService.getNetProfit(calculate, model.price_info.current_price, 1,
+          product.weight, model.price_info.global_price, product.supplier_info.logistics_costs).toFixed(2)
+        console.log('updateModelProfit ', model.current_price, product.weight, model.price_info.global_price, product.supplier_info.logistics_costs, profit)
         _this.$set(model, 'profit', profit)
       } else {
+        console.log('upate model profit not set .....', product)
         _this.$set(model, 'profit', '--')
       }
     }
@@ -392,20 +348,20 @@ export default {
     console.log('create ', this.products)
     var _this = this
     this.products.forEach(product => {
-      if (product.store.profit_setting && product.supplier && product.logistic) {
+      if (product.store.profit_setting && product.supplier_info) {
         const calculate = JSON.parse(JSON.stringify(product.store.profit_setting))
-        product.models.forEach(model => {
-          const profit = profitService.getNetProfit(calculate, model.current_price, 1,
-            product.logistic.weight, model.stock.price, product.supplier.logistics_costs).toFixed(2)
-          console.log('calculate model profit ', profit)
+        product.variants.forEach(model => {
+          const profit = profitService.getNetProfit(calculate, model.price_info.current_price, 1,
+            product.weight, model.price_info.global_price, product.supplier_info.logistics_costs).toFixed(2)
+          console.log('calculate model profit ', model.price_info.current_price, product.weight, model.price_info.global_price, product.supplier_info.logistics_costs, profit)
           _this.$set(model, 'profit', profit)
         })
       } else {
-        product.models.forEach(model => {
+        product.variants.forEach(model => {
           _this.$set(model, 'profit', '请完善商品信息')
         })
       }
-      product.models.forEach(model => {
+      product.variants.forEach(model => {
         if (model.current_price > 0 && model.original_price > 0) {
           _this.$set(model, 'discount_percentage', ((model.original_price - model.current_price) / model.original_price).toFixed(2))
         }

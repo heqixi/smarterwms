@@ -44,7 +44,6 @@ class PurchasePlan(BaseModel):
                                  related_name=ListModel.RelativeFields.SUPPLIER_PURCHASES, verbose_name="Goods Supllier")
     price = models.FloatField(default=0, verbose_name="Goods Price")
     url = models.CharField(max_length=1024, verbose_name="Goods Url")
-    default = models.BooleanField(default=False, verbose_name="Default Purchase Plan")
     tag = models.CharField(max_length=64, default='', blank=True, null=True, verbose_name="Purchase Tags")
 
     class Meta:

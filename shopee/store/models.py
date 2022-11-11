@@ -141,6 +141,7 @@ class StoreProductOptionItemModel(BaseModel):
         db_table = 'store_product_option_item'
         verbose_name = 'data id'
         verbose_name_plural = "data id"
+        unique_together = ['store_product_option', 'index']
         ordering = ['-id']
 
     def __str__(self):
@@ -333,3 +334,20 @@ class ShopeeStoreRegionSetting(BaseModel):
         verbose_name_plural = "shopee store profit setting"
         unique_together = ['store_uid', 'region_settings_id']
         ordering = ['id']
+
+
+class ProductSupplierInfo(BaseModel):
+    product = models.ForeignKey(StoreProductModel, verbose_name='Product', on_delete=models.CASCADE,
+                                related_name='supplier_info')
+    url = models.URLField(null=True, blank=True, max_length=512, verbose_name="Product Supplier Url")
+    logistics_costs = models.FloatField(default=0, verbose_name='Logistic costs')
+    min_purchase_num = models.PositiveIntegerField(default=1, verbose_name='min_purchase_num')
+    delivery_days = models.PositiveIntegerField(default=1, verbose_name='Delivery Days')
+    supplier_addr = models.CharField(max_length=50, null=True, blank=True, verbose_name='Supplier City')
+    supplier_name = models.CharField(max_length=100, null=True, blank=True,  verbose_name='Company')
+
+    class Meta:
+        db_table = 'product_supplier_info'
+        verbose_name = 'product_supplier_info'
+        verbose_name_plural = "Global Product Supplier"
+        ordering = ['-create_time']

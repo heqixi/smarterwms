@@ -39,16 +39,11 @@ class Goods(ProtoType, ABC):
         super().__init__(**kwargs)
 
     def is_valid(self):
-        raise NotImplementedError('Has not Implement')
-
-
-class CreateRequest(Goods):
-
-    def is_valid(self):
-        return self.is_not_empty(self.goods_code) and self.is_not_negetive(self.goods_weight)
+        raise NotImplementedError
 
     def to_message(self):
         return goods_pb2.Goods(
+            id=self.id,
             goods_code=self.goods_code,
             goods_image=self.goods_image,
             goods_name=self.goods_name,
@@ -63,6 +58,12 @@ class CreateRequest(Goods):
             goods_color=self.goods_color,
             bar_code=self.bar_code
         )
+
+
+class CreateRequest(Goods):
+
+    def is_valid(self):
+        return self.goods_code and self.goods_image
 
     def from_message(self, goods: goods_pb2.Goods):
         return Goods(
@@ -86,25 +87,7 @@ class CreateRequest(Goods):
 class UpdateRequest(Goods):
     def is_valid(self):
         return self.is_not_negetive(self.id) and self.is_not_empty(
-            self.goods_code) and self.is_not_negetive(self.goods_weight, nullable=True)
-
-    def to_message(self):
-        return goods_pb2.Goods(
-            id=self.id,
-            goods_code=self.goods_code,
-            goods_image=self.goods_image,
-            goods_name=self.goods_name,
-            goods_desc=self.goods_desc,
-            goods_weight=self.goods_weight,
-            goods_w=self.goods_w,
-            goods_d=self.goods_d,
-            goods_h=self.goods_h,
-            goods_unit=self.goods_unit,
-            goods_class=self.goods_class,
-            goods_brand=self.goods_brand,
-            goods_color=self.goods_color,
-            bar_code=self.bar_code
-        )
+            self.goods_code, nullable=True) and self.is_not_negetive(self.goods_weight, nullable=True)
 
     def from_message(self, goods:goods_pb2.Goods):
         return Goods(
@@ -122,6 +105,33 @@ class UpdateRequest(Goods):
             goods_brand=goods.goods_brand,
             goods_color=goods.goods_color,
             bar_code=self.bar_code
+        )
+
+
+class CreateGroupRequest(ProtoType):
+
+    def __init__(self, **kwargs):
+        self.id = None
+        self.name = None
+        self.goods = None
+        super().__init__(**kwargs)
+
+    def is_valid(self):
+        for goods in self.goods:
+            if not (goods.id or (goods.goods_code and goods.goods_image)):
+                print('Create group request illegal goods')
+                return False
+        return self.name and [goods.is_valid() for goods in self.goods]
+
+    def from_message(self, *args):
+        raise NotImplementedError('Not Implement')
+
+    def to_message(self):
+        goods_message = [goods.to_message() for goods in self.goods]
+        return goods_pb2.GoodsGroup(
+            id=self.id,
+            name=self.name,
+            goods=goods_message
         )
 
 

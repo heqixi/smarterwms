@@ -1,6 +1,6 @@
 import BaseService from 'boot/baseservice';
 
-const prepath = 'fetch';
+const prepath = 'store';
 
 class FetchService extends BaseService {
   getFetchMedias (fetchId) {

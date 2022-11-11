@@ -408,9 +408,8 @@ class ProductService(object):
     def get_category_attribute(self, merchant_id, category_id, language='zh-hans'):
         ret = shopee.request()
 
-    def upload_image(self, files, openid, scene="normal"):
+    def upload_image(self, files, store, scene="normal"):
         from store.services.store_service import StoreService
-        store = StoreModel.objects.get(openid=openid, type=StoreType.MERCHANT)
         token = StoreService.get_instance().get_store_token_info(store_id=store.id).info_value
         ret = shopee.public_request(token['partner_id'], token['partner_key'], 'media_space.upload_image',
                                     {'scene': scene}, files=files)

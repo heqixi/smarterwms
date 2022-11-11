@@ -37,7 +37,7 @@ export default {
     var _this = this
     return {
       pathname: 'stock/list/',
-      listPath: 'goods/?tags=details&stockBin=1&goods=1&supplier=1&asn_details=1&goods_stocks=aggregation&order=stock__shortage__desc',
+      listPath: 'goods/?tags=details&stockBin=1&goods=1&goods_stocks=aggregation&order=stock__shortage__desc',
       pathname_previous: '',
       pathname_next: '',
       numRows: -1,
@@ -873,21 +873,6 @@ export default {
           console.log('stock of goods ', res)
           _this.numRows = res.count
           _this.table_list = res.results
-          // _this.tags_list = res.tags_list
-          // // forTest
-          // res.results.forEach(goods => {
-          //   const tagsOptions = []
-          //   _this.tags_list.forEach(tag => {
-          //     if (
-          //       goods.tags.find(goodsTag => {
-          //         return goodsTag.id === tag.id
-          //       }) === undefined
-          //     ) {
-          //       tagsOptions.push(tag)
-          //     }
-          //   })
-          //   goods.tagsOptions = tagsOptions
-          // })
           _this.matchExternalGoods(_this.table_list)
           _this.pathname_previous = res.previous
           _this.pathname_next = res.next
