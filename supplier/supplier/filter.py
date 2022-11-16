@@ -29,7 +29,6 @@ class PurchasePlanFilter(FilterSet):
             "price": ['exact', 'gt', 'gte', 'lt', 'lte', 'isnull', 'in', 'range'],
             "url": ['exact', 'iexact', 'contains', 'icontains'],
             "tag": ['exact', 'iexact', 'contains', 'icontains'],
-            "default": ['exact', 'iexact', 'contains', 'icontains'],
             "creater": ['exact', 'iexact', 'contains', 'icontains'],
             "is_delete": ['exact', 'iexact'],
             "create_time": ['year', 'month', 'day', 'week_day', 'gt', 'gte', 'lt', 'lte', 'range'],

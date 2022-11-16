@@ -1186,9 +1186,10 @@ class OrderService(object):
                 global_product_dict[global_product.product_id] = global_product
         for product_id, global_product in global_product_dict.items():
             if not GoodsGroupRecord.objects.filter(product_id=product_id).exists():
-                goods =
-                req = CreateGroupRequest(name=global_product.product_sku)
-                GoodsServiceClient.get_instance().create_group()
+                pass # TODO
+                # goods =
+                # req = CreateGroupRequest(name=global_product.product_sku)
+                # GoodsServiceClient.get_instance().create_group()
 
     # 保存或更新ShopeeOrder
     def save_order(self, order, data):

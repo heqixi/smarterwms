@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package supplier;
+
+service SupplierController {
+    rpc List(SupplierListRequest) returns (stream Supplier) {}
+    rpc Create(Supplier) returns (Response) {}
+    rpc Retrieve(SupplierListRequest) returns (Response) {}
+    rpc Update(Supplier) returns (Response) {}
+    rpc Destroy(Supplier) returns (Response) {}
+    rpc CreatePurchasePlan(PurchasePlan) returns (PurchasePlan) {}
+}
+
+message Supplier {
+    int32 id = 1;
+    string supplier_name = 2;
+    string supplier_city = 3;
+    string supplier_address = 4;
+    string supplier_contact = 5;
+    string supplier_manager = 6;
+    string supplier_level = 7;
+}
+
+message PurchasePlan {
+    int32 id = 1;
+    Supplier supplier = 2;
+    float price = 3;
+    string url = 4;
+    string image_url = 5;
+    string tag = 6;
+    repeated int32 goods = 7;
+}
+
+message PurchaseSetting {
+    int32 id = 1;
+    PurchasePlan plan = 2;
+    int32 goods_id = 3;
+    int32 level = 4;
+}
+
+message SupplierListRequest {
+    int32 id = 1;
+}
+
+enum Code {
+    UNKNOW = 0;
+    SUPPLIER_NOT_FOUND = 1;
+    ILLEGAL_PARAMETERS = 3;
+    MISSING_PARAMETERS = 4;
+}
+
+message Response {
+    Code code = 1;
+    string msg = 2;
+    Supplier supplier = 3;
+}

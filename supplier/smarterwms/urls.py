@@ -9,7 +9,6 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from . import views
 
-
 schema_view = get_schema_view(
     openapi.Info(
         title="SmarterWMS--API Docs",
@@ -55,11 +54,9 @@ urlpatterns = [
 
 urlpatterns += [re_path(r'^silk/', include('silk.urls', namespace='silk'))]
 
-# from product.gRpc.server.services.product import ProductService
-# from product.gRpc.server.protos import product_pb2_grpc
-#
-#
-# def grpc_handlers(server):
-#     product_pb2_grpc.add_ProductControllerServicer_to_server(ProductService.as_servicer(), server)
+from supplier.gRpc.server.supplier_service import SupplierService
+from supplier.gRpc.server.protos import supplier_pb2_grpc
 
 
+def grpc_handlers(server):
+    supplier_pb2_grpc.add_SupplierControllerServicer_to_server(SupplierService.as_servicer(), server)

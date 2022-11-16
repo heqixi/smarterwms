@@ -3,6 +3,7 @@ from supplier.models import PurchasePlan
 from supplier.models import ListModel as Supplier
 from supplier.gRpc.server.protos import supplier_pb2
 
+
 def supplier_to_message(supplier: Supplier):
     return supplier_pb2.Supplier(
         id=supplier.id,
@@ -11,7 +12,7 @@ def supplier_to_message(supplier: Supplier):
         supplier_address=supplier.supplier_address,
         supplier_contact=supplier.supplier_contact,
         supplier_manager=supplier.supplier_manager,
-        supplier_level=supplier.supplier_level
+        supplier_level=str(supplier.supplier_level)
     )
 
 

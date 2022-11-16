@@ -36,6 +36,8 @@ INSTALLED_APPS = [
     'store.apps.StoreConfig',
     'publish.apps.PublishConfig',
     'globalproduct.apps.GlobalProductConfig',
+    'supplier.apps.SupplierConfig',
+    'goods.apps.GoodsConfig',
     'order.apps.OrderConfig',
     'timer.apps.TimerConfig',
     'throttle.apps.ThrottleConfig',
@@ -91,7 +93,7 @@ DATABASES = {
         'USER': 'juyigou',
         'PASSWORD': '994821',
         'HOST': '127.0.0.1',
-        'PORT': '3306'
+        'PORT': '5432'
     }
 }
 

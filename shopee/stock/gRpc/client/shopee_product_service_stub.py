@@ -1,8 +1,6 @@
 import threading
 import grpc
 
-# from stock.gRpc.client.api import product_pb2_grpc, product_pb2
-
 
 class ProductServiceClient(object):
     __create_key = object()

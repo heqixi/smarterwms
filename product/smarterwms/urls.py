@@ -39,7 +39,7 @@ urlpatterns = [
     path('myip/', views.myip, name='myip'),
     path('fetch/', include('fetchbox.urls')),
     path('product/', include('product.urls')),
-    path('product/', include('productmedia.urls')),
+    path('productmedia/', include('productmedia.urls')),
     path('publish/', include('productpublish.urls')),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     re_path(r'^favicon\.ico$', views.favicon, name='favicon'),

@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package stock;
+
+import "google/protobuf/empty.proto";
+
+service StockBinController {
+    rpc List(StockBinListRequest) returns (stream StockBin) {}
+    rpc Create(StockBin) returns (StockBin) {}
+    rpc Retrieve(StockBinListRequest) returns (StockBin) {}
+    rpc Update(StockBin) returns (StockBin) {}
+    rpc Destroy(StockBin) returns (google.protobuf.Empty) {}
+}
+
+message StockBin {
+    int32 id = 1;
+    string bin_name = '';
+}
+
+message StockBinListRequest {
+}
+
+message StockBinRetrieveRequest {
+    int32 id = 1;
+}

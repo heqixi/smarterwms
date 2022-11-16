@@ -1,3 +1,4 @@
+from django.db import transaction
 from django_grpc_framework import generics
 
 from supplier.gRpc.server.utils import purchase_to_message
@@ -8,8 +9,9 @@ from supplier.gRpc.server.types.response import SupplierNotFoundError, MissingPa
 
 class SupplierService(generics.ModelService):
 
+    @transaction.atomic
     def CreatePurchasePlan(self, request, context):
-        openid = ''
+        openid = 'c240c14ea66ef48bc3c5645735a715af'
         creater = 'admin'
         supplier = request.supplier
         if supplier.id:
@@ -38,7 +40,7 @@ class SupplierService(generics.ModelService):
             url=request.url,
             image_url=request.image_url
         )
-        for goods_id in request.goods_id:
+        for goods_id in request.goods:
             exist_setting = PurchasePlanGoodsSetting.objects.filter(goods=goods_id).order_by('level').last()
             level = 0
             if exist_setting:

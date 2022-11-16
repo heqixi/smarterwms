@@ -17,7 +17,7 @@ class GoodsServiceClient(object):
     def __init__(self, create_key):
         assert (create_key == GoodsServiceClient.__create_key),\
             "Stock Service is single instance, please use GlobalProductService.get_instance()"
-        channel = grpc.insecure_channel('localhost:50052')
+        channel = grpc.insecure_channel('192.168.31.237:50051')
 
         self.service_stub = goods_pb2_grpc.GoodsControllerStub(channel)
 
@@ -65,7 +65,7 @@ class GoodsServiceClient(object):
         if not req.is_valid():
             raise Exception('create group illegal req')
         try:
-            goods_group = self.service_stub.Create(req.to_message())
+            goods_group = self.service_stub.CreateGroup(req.to_message())
         except Exception as exc:
             print('create goods group remote exception,', exc)
             raise Exception('create goods group remote exception ')
@@ -89,8 +89,3 @@ class GoodsServiceClient(object):
             goods_image=goods.goods_image,
             group_id=group_id
         )
-
-
-
-
-

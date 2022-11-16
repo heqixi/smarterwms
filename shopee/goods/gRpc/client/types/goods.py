@@ -39,7 +39,7 @@ class Goods(ProtoType, ABC):
         super().__init__(**kwargs)
 
     def is_valid(self):
-        raise NotImplementedError
+        return self.is_not_negetive(self.id) or (self.is_not_empty(self.goods_code, self.goods_image))
 
     def to_message(self):
         return goods_pb2.Goods(
@@ -58,6 +58,9 @@ class Goods(ProtoType, ABC):
             goods_color=self.goods_color,
             bar_code=self.bar_code
         )
+
+    def from_message(self, *args):
+        raise NotImplementedError('Not Implement')
 
 
 class CreateRequest(Goods):
@@ -117,10 +120,6 @@ class CreateGroupRequest(ProtoType):
         super().__init__(**kwargs)
 
     def is_valid(self):
-        for goods in self.goods:
-            if not (goods.id or (goods.goods_code and goods.goods_image)):
-                print('Create group request illegal goods')
-                return False
         return self.name and [goods.is_valid() for goods in self.goods]
 
     def from_message(self, *args):

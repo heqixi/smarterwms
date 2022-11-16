@@ -1,0 +1,14 @@
+from django.db import models
+from base.models import BaseModel
+
+class ListModel(BaseModel):
+    goods_unit = models.CharField(max_length=32, verbose_name="Goods Unit")
+
+    class Meta:
+        db_table = 'goodsunit'
+        verbose_name = 'data id'
+        verbose_name_plural = "data id"
+        ordering = ['goods_unit']
+
+    def __str__(self):
+        return self.pk

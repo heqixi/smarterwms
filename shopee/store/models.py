@@ -339,6 +339,7 @@ class ShopeeStoreRegionSetting(BaseModel):
 class ProductSupplierInfo(BaseModel):
     product = models.ForeignKey(StoreProductModel, verbose_name='Product', on_delete=models.CASCADE,
                                 related_name='supplier_info')
+    price = models.FloatField(null=True, verbose_name='Product Supplier price')
     url = models.URLField(null=True, blank=True, max_length=512, verbose_name="Product Supplier Url")
     logistics_costs = models.FloatField(default=0, verbose_name='Logistic costs')
     min_purchase_num = models.PositiveIntegerField(default=1, verbose_name='min_purchase_num')

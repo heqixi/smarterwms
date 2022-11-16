@@ -19,7 +19,7 @@ services:
     command: "kong migrations bootstrap"
     networks: 
       - kong-net
-    restart: on-failure
+    restart: "no"
     environment:
       - KONG_DATABASE=postgres
       - KONG_PG_DATABASE=kong
@@ -35,7 +35,7 @@ services:
 #####################
   kong:
     image: kong:latest
-    restart: always
+    restart: "no"
     networks:
       - kong-net
     environment:
@@ -66,7 +66,7 @@ services:
     command: "-c prepare -a postgres -u postgresql://kong:kong@kong-database:5432/konga"  #注意是用户名：密码@数据库服务名称：端口
     networks:
       - kong-net
-    restart: on-failure
+    restart: "no"
     links:
       - kong-database
     depends_on:
@@ -75,7 +75,7 @@ services:
 
   konga:
     image: pantsel/konga:latest
-    restart: always
+    restart: "no"
     networks:
       - kong-net
     environment:
