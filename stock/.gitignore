@@ -9,7 +9,7 @@ stats_log/*
 
 media/
 
-smarterwms/settings.py
+#smarterwms/settings.py
 authorization.txt
 authorization.json
 db.sqlite3
