@@ -101,7 +101,7 @@ import mediaService from 'pages/fetchbox/services/mediaservice'
 import JSZip from 'jszip'
 import FileSaver from 'file-saver'
 import NewFormDialog from 'components/Share/newFormDialog'
-import {getauth, postauth} from "boot/axios_request";
+import {getauth, postauth} from 'boot/axios_request';
 
 export default {
   name: 'FetchList',

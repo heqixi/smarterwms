@@ -9,12 +9,12 @@ class ASNDetailGetSerializer(serializers.ModelSerializer):
 
     def get_fields(self):
         fields = super().get_fields()
-        is_goods = self.context['request'].query_params.get('asn_details_goods', None)
+        # is_goods = self.context['request'].query_params.get('asn_details_goods', None)
         purchase_details = self.context['request'].query_params.get('asn_details_purchase', None)
-        if is_goods:
-            raise Exception('Improper denpendency')
-            # goods = GoodsGetSerializer(required=False)
-            # fields['goods'] = goods
+        # if is_goods:
+        #     raise Exception('Improper denpendency')
+        #     # goods = GoodsGetSerializer(required=False)
+        #     # fields['goods'] = goods
         if purchase_details:
             purchase = PurchasePlanGetSerializer(required=False)
             fields['purchase'] = purchase

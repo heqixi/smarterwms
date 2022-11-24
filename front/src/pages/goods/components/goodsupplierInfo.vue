@@ -20,7 +20,20 @@
         </div>
       </div>
       <div class="row justify-start">
-        <div class="col-3">
+        <div class="col-2">
+          <q-input
+              dense
+              v-model="supplier.price"
+              @blur="save('logistics_costs')">
+            <template v-slot:before class="q-mb-sm">
+              <span v-if="supplierInfo.supplier_price.require" :style="{color:'red', fontSize:'8px'}"> * </span>
+              <div class="text-body2">
+                {{supplierInfo.supplier_price.label}}
+              </div>
+            </template>
+          </q-input>
+        </div>
+        <div class="col-2">
           <q-input
             dense
             v-model="supplier.supplier_name"
@@ -33,7 +46,7 @@
             </template>
           </q-input>
         </div>
-        <div class="col-3">
+        <div class="col-2">
           <q-input
             dense
             v-model="supplier.logistics_costs"
@@ -46,7 +59,7 @@
             </template>
           </q-input>
         </div>
-        <div class="col-3 q-pl-lg">
+        <div class="col-2 q-pl-lg">
           <q-input
             dense
             v-model="supplier.min_purchase_num"
@@ -59,7 +72,7 @@
             </template>
           </q-input>
         </div>
-        <div class="col-3 q-pl-lg">
+        <div class="col-2 q-pl-lg">
           <q-input
             dense
             v-model="supplier.delivery_days"
@@ -87,6 +100,11 @@ export default {
           value: '',
           require: true,
           label: '商品源'
+        },
+        supplier_price: {
+          value: '',
+          require: false,
+          label: '采购价'
         },
         supplier_name: {
           value: '',

@@ -269,10 +269,11 @@ class ProductService(object):
             store_product.description = item_data.get('description')
         elif 'extended'.upper() == item_data.get('description_type').upper():
             field_list = item_data.get('description_info').get('extended_description').get('field_list')
-            store_product.description = ''
-            for field in field_list:
-                if field.get('field_type').upper() == 'text'.upper():
-                    store_product.description += field.get('text')
+            if field_list:
+                store_product.description = ''
+                for field in field_list:
+                    if field.get('field_type').upper() == 'text'.upper():
+                        store_product.description += field.get('text')
         store_product.brand_id = item_data.get('brand').get('brand_id')
         store_product.brand_name = item_data.get('brand').get('original_brand_name')
         store_product.category_id = item_data.get('category_id')

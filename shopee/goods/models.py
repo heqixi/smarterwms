@@ -6,7 +6,7 @@ from base.models import BaseModel
 class GoodsGroupRecord(BaseModel):
     group_id = models.PositiveIntegerField(verbose_name='Goods Group ID')
 
-    group_name = models.CharField(max_length=128, verbose_name='Goods group name')
+    name = models.CharField(max_length=128, verbose_name='Goods group name')
 
     product_id = models.PositiveIntegerField(verbose_name='Relative Product ID')
 

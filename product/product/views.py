@@ -158,15 +158,6 @@ class GlobalProductView(viewsets.ModelViewSet):
             clone_products.append(GlobalProductGetSerializers(product_clone, context={'request': self.request}).data)
         return Response(clone_products, status=200)
 
-    def get_keyword_filter(self, request):
-        from django.conf import settings
-        shop_type = self.request.query_params.get('shop_type', None)
-        if shop_type == 'shopee':
-            keyword_filter = settings.PRODUCT.get('keyword_filter')
-        else:
-            raise APIException('get keyword filter unkonw shopee type')
-        return Response(keyword_filter, status=200)
-
     @transaction.atomic
     def _create_or_update_product_detail(self, product, data):
         supplier_info = data.get('supplier', None)

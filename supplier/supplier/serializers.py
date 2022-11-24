@@ -27,12 +27,25 @@ class SupplierGetSerializer(serializers.ModelSerializer):
 
 class PurchasePlanGetSerializer(serializers.ModelSerializer):
 
+    def get_goods_settings(self, purchase: PurchasePlan):
+        res = []
+        for goods_settings in purchase.goods_settings.all():
+            res.append({
+                "id": goods_settings.id,
+                "goods": goods_settings.goods,
+                "level": goods_settings.level
+            })
+        return res
+
     def get_fields(self):
         fields = super().get_fields()
         supplier_param = self.context['request'].query_params.get('supplier', None)
+        goods_settings = self.context['request'].query_params.get('goods_settings', None)
         if supplier_param:
             supplier = SupplierGetSerializer(required=False)
             fields['supplier'] = supplier
+        if goods_settings:
+            fields['goods_settings'] = serializers.SerializerMethodField('get_goods_settings')
         return fields
 
     class Meta:

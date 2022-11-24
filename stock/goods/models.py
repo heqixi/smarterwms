@@ -30,17 +30,17 @@ class ListModel(BaseModel):
 
     goods_code = models.CharField(max_length=255, verbose_name="Goods Name", db_index=True)
     goods_image = models.CharField(max_length=1024,  null=True, blank=True, verbose_name="Goods Main Image Url")
-    goods_name = models.CharField(max_length=255,  blank=True, verbose_name="Goods Name")
-    goods_desc = models.CharField(max_length=4096,  blank=True, verbose_name="Goods Description")
+    goods_name = models.CharField(max_length=255, null=True, blank=True, verbose_name="Goods Name")
+    goods_desc = models.CharField(max_length=4096,  null=True, blank=True, verbose_name="Goods Description")
     goods_weight = models.FloatField(default=0, verbose_name="Goods Weight")
     goods_w = models.FloatField(default=0, blank=True, verbose_name="Goods Width")
     goods_d = models.FloatField(default=0, blank=True, verbose_name="Goods Depth")
     goods_h = models.FloatField(default=0, blank=True, verbose_name="Goods Height")
-    goods_unit = models.CharField(max_length=255,  blank=True, verbose_name="Goods Unit")
-    goods_class = models.CharField(max_length=255,  blank=True, verbose_name="Goods Class")
-    goods_brand = models.CharField(max_length=255,  blank=True, verbose_name="Goods Brand")
-    goods_color = models.CharField(max_length=255,  blank=True, verbose_name="Goods Color")
-    bar_code = models.CharField(max_length=255,  blank=True, verbose_name="Bar Code")
+    goods_unit = models.CharField(max_length=255,  null=True, blank=True, verbose_name="Goods Unit")
+    goods_class = models.CharField(max_length=255, null=True, blank=True, verbose_name="Goods Class")
+    goods_brand = models.CharField(max_length=255, null=True, blank=True, verbose_name="Goods Brand")
+    goods_color = models.CharField(max_length=255, null=True, blank=True, verbose_name="Goods Color")
+    bar_code = models.CharField(max_length=255, null=True, blank=True, verbose_name="Bar Code")
 
     class Meta:
         db_table = 'goods'
@@ -57,7 +57,7 @@ class ListModel(BaseModel):
 
 
 class GoodsGroup(BaseModel):
-    goods = models.ManyToManyField(ListModel, related_name='goods_group')
+    goods = models.ManyToManyField(ListModel, null=True, related_name='goods_group')
     name = models.CharField(max_length=128, verbose_name='Goods group name')
 
     class Meta:

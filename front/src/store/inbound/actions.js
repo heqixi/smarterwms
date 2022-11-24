@@ -3,10 +3,9 @@ import {
   postauth,
   putauth,
   deleteauth,
-  ViewPrintAuth
 } from "boot/axios_request";
 
-import { getNextPhase } from "./helper";
+import { getNextPhase, getGoodsDetails } from "./helper";
 import {
   ACTION_MOVE_TO_NEXT_PHASE,
   ADD_GOODS_TO_PURCHASE,
@@ -37,9 +36,10 @@ export default {
     if (params.path) {
       path = params.path
     }
-    let response = await getauth(path, {});
-    let result = commit(INIT_ASN_LIST, response.results);
-    return response;
+    const asnList = (await getauth(path, {})).results
+    await getGoodsDetails(asnList)
+    commit(INIT_ASN_LIST, asnList)
+    return asnList
   },
 
   [ACTION_MOVE_TO_NEXT_PHASE]({ commit }, currentPhase, index) {
@@ -199,15 +199,16 @@ export default {
     let response = await putauth(ANS_PATH + "list/" + data.id + "/", data);
     console.log("ACTION_UPDATE_ASN_LIST response ", response);
 
-    let newData = await getauth(
+    let asnObj = await getauth(
       ANS_PATH +
         "list/" +
         data.id +
         "?asn_details=1&asn_supplier=details&asn_order=1&asn_details_purchase=1&asn_details_goods=1&goods_stocks=aggregation&purchases=true",
       {}
-    );
-    console.log("get new data after update ", newData);
-    commit(INIT_ASN_LIST, [newData]);
+    )
+    await getGoodsDetails([asnObj])
+    console.log("get new data after update ", asnObj);
+    commit(INIT_ASN_LIST, [asnObj]);
   },
 
   async [ACTION_ADD_ANS_ORDER]({ commit }, data) {

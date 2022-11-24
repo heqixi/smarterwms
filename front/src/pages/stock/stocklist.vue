@@ -862,7 +862,7 @@ export default {
       } else {
         console.log('erternal stock no found', goods)
       }
-      const nameMatch = goods.goods_name.indexOf(searchTerm) > -1
+      const nameMatch = goods.goods_name && goods.goods_name.indexOf(searchTerm) > -1
       return codeMatch || tagMatch || nameMatch || externalStockMatch
     },
     getList () {
@@ -874,8 +874,8 @@ export default {
           _this.numRows = res.count
           _this.table_list = res.results
           _this.matchExternalGoods(_this.table_list)
-          _this.pathname_previous = res.previous
-          _this.pathname_next = res.next
+          _this.pathname_previous = baseurl + res.pre_path
+          _this.pathname_next = baseurl + res.next_path
           _this.loading = false
         })
         .catch(err => {
@@ -954,7 +954,6 @@ export default {
       }
     },
     getListNext (size) {
-      // TODO
       var _this = this
       this.loading = true
       let path = _this.pathname_next
@@ -983,8 +982,8 @@ export default {
                   _this.table_list.push(goods)
                 }
               })
-              _this.pathname_previous = res.previous
-              _this.pathname_next = res.next
+              _this.pathname_previous = baseurl + res.pre_path
+              _this.pathname_next = baseurl + res.next_path
               resolve('success')
             })
             .catch(err => {

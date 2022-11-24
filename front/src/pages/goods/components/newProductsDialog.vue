@@ -120,7 +120,7 @@ export default {
           min_purchase_num: undefined,
         },
         specifications: [],
-        status: 'ED',
+        status: 'EDIT',
         images: [],
         models: [],
         category: undefined,
@@ -159,17 +159,6 @@ export default {
       _this.product.images = images
     },
     wrapBaseInfo (formData) {
-      if (this.product.specifications.length <= 0) {
-        if (this.product.mode !== 'SG') {
-          this.product.mode = 'SG' // 单变体模式
-          this.product.update = true
-        }
-      } else {
-        if (this.product.mode !== 'MT') {
-          this.product.mode = 'MT' // 多变体模式
-          this.product.update = true
-        }
-      }
       const firstImage = formData.images.sort((x, y) => {
         return x.index - y.index
       }).find(image => {
@@ -186,6 +175,7 @@ export default {
     wrapSupplierInfo (formData) {
       formData.supplier = {
         url: this.product.supplier.url,
+        price: this.product.supplier.price,
         logistics_costs: this.product.supplier.logistics_costs,
         min_purchase_num: this.product.supplier.min_purchase_num,
         delivery_days: this.product.supplier.delivery_days,
@@ -308,11 +298,13 @@ export default {
       console.log('newDataSubmit')
       var _this = this
       const product2Save = { id: this.product.id }
-      if (_this.product.status === 'ED') {
+      if (_this.product.status === 'EDIT') {
         if (_this.isReadyToPublish()) {
           console.log('product is ready to publish ')
           product2Save.status = 'PUBLISH_READY'
           _this.product.status = 'PUBLISH_READY'
+        } else {
+          console.log('product is not ready to publish ')
         }
       }
       this.loading = true
@@ -337,11 +329,9 @@ export default {
         return
       }
       let pathName = _this.pathName
-      if (_this.currentMerchant && _this.currentMerchant.platform === 1) {
-        pathName = 'shopee/publish/'
-        product2Save.merchant = {
-          id: _this.currentMerchant.id
-        }
+      pathName = 'shopee/publish/'
+      product2Save.merchant = {
+        id: _this.product.store.id
       }
       console.log('new data summit ', product2Save)
       product2Save.creater = this.login_name
@@ -571,46 +561,38 @@ export default {
       this.$refs.dialog.hide()
     },
     getProductInfo (productId) {
-      if (this.currentMerchant) {
-        if (this.currentMerchant.platform === 1) {
-          this.getShopeeProductInfo(productId, this.currentMerchant)
-        }
-      }
+      this.getShopeeProductInfo(productId)
     },
-    getShopeeProductInfo (productId, store, force = false) {
+    getShopeeProductInfo (productId, force = false) {
       var _this = this
       const path = `shopee/publish/product/${productId}/`
       _this.loading = true
       getauth(path).then(product => {
         if (!product) {
-          _this.$q.dialog({
-            component: NewFormDialog,
-            title: `商品尚未认领到${store.name},是否现在认领？`
-          }).onOk(() => {
-            console.log('clain product to store ?')
-            if (!force) {
-              _this.getShopeeProductInfo(productId, store, true)
-            } else {
-              _this.loading = false
-              console.error('Recusive call!!')
-            }
+          this.$q.notify({
+            message: '找不到产品，请刷新重试',
+            icon: 'close',
+            color: 'negative'
           })
         } else {
           _this.loading = false
-          _this.unwrapShopeeProductInfo(product, store)
+          _this.unwrapShopeeProductInfo(product)
         }
       }).catch(err => {
         _this.loading = false
         console.log('get shopee product fail ', err)
       })
     },
-    unwrapShopeeProductInfo (product, store) {
+    unwrapShopeeProductInfo (product) {
       console.log('shopee product', product)
       this.product.id = product.id
+      this.product.status = product.product_status
       this.product.supplier.url = product.supplier_info.url
+      this.product.supplier.price = product.supplier_info.price
       this.product.supplier.supplier_name = product.supplier_info.supplier_name
       this.product.supplier.logistics_costs = product.supplier_info.logistics_costs
       this.product.supplier.min_purchase_num = product.supplier_info.min_purchase_num
+      this.product.supplier.delivery_days = product.supplier_info.delivery_days
       this.product.logistic.product_w = product.width
       this.product.logistic.product_h = product.height
       this.product.logistic.product_d = product.length
@@ -619,24 +601,21 @@ export default {
       this.product.baseInfo.desc = product.description.replaceAll('\n', '</br>')
       this.product.baseInfo.name = product.product_name
       this.product.baseInfo.sku = product.product_sku
-      this.product.images = product.medias.filter(m => {
-        return m.type === 2
-      }).map(image => {
-        return {
-          index: image.index,
-          url: image.url,
-          image_id: image.image_id
-        }
-      }).sort((x, y) => { return x.index - y.index })
-
+      this.product.store = product.store
+      this.product.image_options = product.medias.filter(m => {
+        return m.type === 2 && m.url
+      }).sort((x, y) => {
+        return x.index - y.index
+      })
+      this.product.images = this.product.image_options.filter((m, index) => { return index < 8})
       this.product.category = product.category || {
         id: undefined,
         merchant: {
-          id: store.id,
-          uid: store.uid,
-          name: store.name
+          id: product.store.id,
+          uid: product.store.uid,
+          name: product.store.name
         },
-        merchant_id: store.id,
+        merchant_id: product.store.id,
         category_id: undefined,
         sub_category: undefined,
         attributes: [],
@@ -684,7 +663,7 @@ export default {
         }
       }).sort((x, y) => { return x.option_item_index - y.option_item_index })
       console.log('this product ', this.product)
-    },
+    }
   },
   created () {
     var _this = this

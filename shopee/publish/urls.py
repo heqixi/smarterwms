@@ -10,6 +10,7 @@ path(r'product/shop', views.GlobalProductView.as_view({"get": "get_shop_product"
 path(r'product/price', views.GlobalProductView.as_view({"get": "get_price", "post": "update_price"}), name="product_price"),
 path(r'product/publish', views.GlobalProductView.as_view({"post": "publish_to_shopee"}), name="product_publish_shopee"),
 path(r'product/delete', views.GlobalProductView.as_view({"post": "delete_batch"}), name="product_delete_batch"),
+path(r'product/keyword_filter', views.GlobalProductView.as_view({"get": "get_keyword_filter"}), name="get_keyword_filter"),
 re_path(r'^product/(?P<pk>\d+)/$', views.GlobalProductView.as_view({
     'get': 'retrieve',
     'put': 'update',

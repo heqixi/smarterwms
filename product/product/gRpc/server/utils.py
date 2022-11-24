@@ -1,6 +1,6 @@
 from functools import cmp_to_key, reduce
 
-from product.models import GlobalProduct, ProductSpecification, ProductOption
+from product.models import GlobalProduct, ProductSpecification, ProductOption, ProductSupplier
 from product.gRpc.server.protos import product_pb2
 from productmedia.models import ProductMedia, Constants
 
@@ -97,4 +97,15 @@ def product_media_to_message(media: ProductMedia) -> product_pb2.ProductMedia:
         type=1 if media.media_type == Constants.MEDIA_TYPE_VIDEO else 2,
         url=media.url,
         index=media.index
+    )
+
+
+def supplier_info_to_message(supplier_info: ProductSupplier):
+    return product_pb2.SupplierInfo(
+        id=supplier_info.id,
+        url=supplier_info.url,
+        logistics_costs=supplier_info.logistics_costs,
+        min_purchase_num=supplier_info.min_purchase_num,
+        delivery_days=supplier_info.delivery_days,
+        supplier_name=supplier_info.supplier_name
     )

@@ -34,7 +34,7 @@ class SupplierRegister(object):
             if not force:
                 logger.warning('Purchase plan of product already register, purchase id %s ' % purchase_record.id)
                 return purchase_record
-        goods_group_record = GoodsGroupRecord.objects.filter('product_id').first()
+        goods_group_record = GoodsGroupRecord.objects.filter(product_id=product_id).first()
         if not goods_group_record:
             logger.error('Missing goods group for product %s ', product_id)
             return None
@@ -48,15 +48,15 @@ class SupplierRegister(object):
             return None
         supplier_info = ProductSupplierInfo.objects.filter(product_id=product_id).first()
         if not supplier_info:
-            logger.error('Missing supplier info of product %s '% product_id)
+            logger.error('Missing supplier info of product %s ' % product_id)
             return None
         goods = [goods_record.goods_id for goods_record in goods_of_group]
         supplier = Supplier(
             supplier_name=supplier_info.supplier_name
         )
         req = CreatePurchasePlanReq(
-            price=supplier_info.get('price', None),
-            url=supplier_info.get('url', None),
+            price=supplier_info.price,
+            url=supplier_info.url,
             image_url=store_product.image_url,
             tag=store_product.product_sku,
             goods=goods,

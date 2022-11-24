@@ -117,10 +117,11 @@ class CreateGroupRequest(ProtoType):
         self.id = None
         self.name = None
         self.goods = None
+        self.product_id = None
         super().__init__(**kwargs)
 
     def is_valid(self):
-        return self.name and [goods.is_valid() for goods in self.goods]
+        return self.name and self.product_id and [goods.is_valid() for goods in self.goods]
 
     def from_message(self, *args):
         raise NotImplementedError('Not Implement')

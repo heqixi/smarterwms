@@ -13,47 +13,49 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rproduct.proto\x12\x07product\"[\n\rProductOption\x12\n\n\x02id\x18\x01 \x01(\x05\x12\x12\n\nspec_index\x18\x02 \x01(\x05\x12\r\n\x05index\x18\x03 \x01(\x05\x12\x0c\n\x04name\x18\x04 \x01(\t\x12\r\n\x05image\x18\x05 \x01(\t\"u\n\rSpecification\x12\n\n\x02id\x18\x01 \x01(\x05\x12\x12\n\nproduct_id\x18\x02 \x01(\x05\x12\x0c\n\x04name\x18\x03 \x01(\t\x12\r\n\x05index\x18\x04 \x01(\x05\x12\'\n\x07options\x18\x05 \x03(\x0b\x32\x16.product.ProductOption\"\x9a\x01\n\x07Product\x12\n\n\x02id\x18\x01 \x01(\x05\x12\x0b\n\x03sku\x18\x02 \x01(\t\x12&\n\x06status\x18\x03 \x01(\x0e\x32\x16.product.ProductStatus\x12\r\n\x05image\x18\x05 \x01(\t\x12\x0c\n\x04name\x18\x06 \x01(\t\x12\x0c\n\x04\x64\x65sc\x18\x07 \x01(\t\x12\x13\n\x0bsecond_hand\x18\t \x01(\x08\x12\x0e\n\x06models\x18\n \x03(\x05\"D\n\x0cProductMedia\x12\n\n\x02id\x18\x01 \x01(\x05\x12\x0c\n\x04type\x18\x02 \x01(\x05\x12\r\n\x05index\x18\x03 \x01(\x05\x12\x0b\n\x03url\x18\x04 \x01(\t\"n\n\x0cProductModel\x12\n\n\x02id\x18\x01 \x01(\x05\x12\x0b\n\x03sku\x18\x02 \x01(\t\x12\x0c\n\x04name\x18\x03 \x01(\t\x12\x11\n\tstock_qty\x18\x04 \x01(\x05\x12\r\n\x05price\x18\x05 \x01(\x02\x12\x15\n\roptions_index\x18\x06 \x01(\t\"\xc6\x01\n\x0cProductExtra\x12)\n\tfirstSpec\x18\x01 \x01(\x0b\x32\x16.product.Specification\x12*\n\nsecondSpec\x18\x02 \x01(\x0b\x32\x16.product.Specification\x12\x12\n\npublish_id\x18\x03 \x03(\t\x12%\n\x06models\x18\x04 \x03(\x0b\x32\x15.product.ProductModel\x12$\n\x05media\x18\x05 \x03(\x0b\x32\x15.product.ProductMedia\"Y\n\x0eProductDetails\x12!\n\x07product\x18\x01 \x01(\x0b\x32\x10.product.Product\x12$\n\x05\x65xtra\x18\x02 \x01(\x0b\x32\x15.product.ProductExtra\"i\n\rFieldSelector\x12\x15\n\rspecification\x18\x01 \x01(\x08\x12\x0e\n\x06option\x18\x02 \x01(\x08\x12\x12\n\npublish_id\x18\x03 \x01(\x08\x12\x0e\n\x06models\x18\x04 \x01(\x08\x12\r\n\x05media\x18\x05 \x01(\x08\">\n\x12ProductListRequest\x12(\n\x08selector\x18\x01 \x01(\x0b\x32\x16.product.FieldSelector\"G\n\x0fRetrieveRequest\x12\n\n\x02id\x18\x01 \x01(\x05\x12(\n\x08selector\x18\x02 \x01(\x0b\x32\x16.product.FieldSelector\"`\n\x13ProductQueryRequest\x12\x0b\n\x03sku\x18\x01 \x01(\t\x12\x12\n\npublish_id\x18\x02 \x01(\t\x12(\n\x08selector\x18\x03 \x01(\x0b\x32\x16.product.FieldSelector\"5\n\x11\x41lterModelRequest\x12 \n\x06models\x18\x01 \x03(\x0b\x32\x10.product.Product\"\x8a\x01\n\x0fProductResponse\x12!\n\x04\x63ode\x18\x01 \x01(\x0e\x32\x13.product.ActionCode\x12\x0b\n\x03msg\x18\x02 \x01(\t\x12!\n\x07product\x18\x03 \x01(\x0b\x32\x10.product.Product\x12$\n\x05\x65xtra\x18\x04 \x01(\x0b\x32\x15.product.ProductExtra\"v\n\x15SpecificationResponse\x12!\n\x04\x63ode\x18\x01 \x01(\x0e\x32\x13.product.ActionCode\x12\x0b\n\x03msg\x18\x02 \x01(\t\x12-\n\rspecification\x18\x03 \x01(\x0b\x32\x16.product.Specification\"h\n\x0eOptionResponse\x12!\n\x04\x63ode\x18\x01 \x01(\x0e\x32\x13.product.ActionCode\x12\x0b\n\x03msg\x18\x02 \x01(\t\x12&\n\x06option\x18\x03 \x01(\x0b\x32\x16.product.ProductOption*9\n\rProductStatus\x12\x08\n\x04\x45\x44IT\x10\x00\x12\x11\n\rPUBLISH_READY\x10\x01\x12\x0b\n\x07PUBLISH\x10\x02*\x94\x01\n\nActionCode\x12\x0b\n\x07SUCCESS\x10\x00\x12\x15\n\x11PRODUCT_NOT_FOUND\x10\x01\x12\x1b\n\x17SPECIFICATION_NOT_FOUND\x10\x02\x12\x16\n\x12ILLEGAL_PARAMETERS\x10\x03\x12\x16\n\x12MISSING_PARAMETERS\x10\x04\x12\x15\n\x11STORAGE_EXCEPTION\x10\x05\x32\xdc\x03\n\x11ProductController\x12@\n\x04List\x12\x1b.product.ProductListRequest\x1a\x17.product.ProductDetails\"\x00\x30\x01\x12=\n\x06\x43reate\x12\x17.product.ProductDetails\x1a\x18.product.ProductResponse\"\x00\x12@\n\x08Retrieve\x12\x18.product.RetrieveRequest\x1a\x18.product.ProductResponse\"\x00\x12\x36\n\x06Update\x12\x10.product.Product\x1a\x18.product.ProductResponse\"\x00\x12\x37\n\x07\x44\x65stroy\x12\x10.product.Product\x1a\x18.product.ProductResponse\"\x00\x12\x42\n\x05Query\x12\x1c.product.ProductQueryRequest\x1a\x17.product.ProductDetails\"\x00\x30\x01\x12O\n\x13\x43reateSpecification\x12\x16.product.Specification\x1a\x1e.product.SpecificationResponse\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rproduct.proto\x12\x07product\"[\n\rProductOption\x12\n\n\x02id\x18\x01 \x01(\x05\x12\x12\n\nspec_index\x18\x02 \x01(\x05\x12\r\n\x05index\x18\x03 \x01(\x05\x12\x0c\n\x04name\x18\x04 \x01(\t\x12\r\n\x05image\x18\x05 \x01(\t\"u\n\rSpecification\x12\n\n\x02id\x18\x01 \x01(\x05\x12\x12\n\nproduct_id\x18\x02 \x01(\x05\x12\x0c\n\x04name\x18\x03 \x01(\t\x12\r\n\x05index\x18\x04 \x01(\x05\x12\'\n\x07options\x18\x05 \x03(\x0b\x32\x16.product.ProductOption\"\x88\x01\n\x0cSupplierInfo\x12\n\n\x02id\x18\x01 \x01(\x05\x12\x0b\n\x03url\x18\x02 \x01(\t\x12\x17\n\x0flogistics_costs\x18\x03 \x01(\x02\x12\x18\n\x10min_purchase_num\x18\x04 \x01(\x05\x12\x15\n\rdelivery_days\x18\x05 \x01(\x05\x12\x15\n\rsupplier_name\x18\x06 \x01(\t\"\x9a\x01\n\x07Product\x12\n\n\x02id\x18\x01 \x01(\x05\x12\x0b\n\x03sku\x18\x02 \x01(\t\x12&\n\x06status\x18\x03 \x01(\x0e\x32\x16.product.ProductStatus\x12\r\n\x05image\x18\x05 \x01(\t\x12\x0c\n\x04name\x18\x06 \x01(\t\x12\x0c\n\x04\x64\x65sc\x18\x07 \x01(\t\x12\x13\n\x0bsecond_hand\x18\t \x01(\x08\x12\x0e\n\x06models\x18\n \x03(\x05\"D\n\x0cProductMedia\x12\n\n\x02id\x18\x01 \x01(\x05\x12\x0c\n\x04type\x18\x02 \x01(\x05\x12\r\n\x05index\x18\x03 \x01(\x05\x12\x0b\n\x03url\x18\x04 \x01(\t\"n\n\x0cProductModel\x12\n\n\x02id\x18\x01 \x01(\x05\x12\x0b\n\x03sku\x18\x02 \x01(\t\x12\x0c\n\x04name\x18\x03 \x01(\t\x12\x11\n\tstock_qty\x18\x04 \x01(\x05\x12\r\n\x05price\x18\x05 \x01(\x02\x12\x15\n\roptions_index\x18\x06 \x01(\t\"\xf3\x01\n\x0cProductExtra\x12)\n\tfirstSpec\x18\x01 \x01(\x0b\x32\x16.product.Specification\x12*\n\nsecondSpec\x18\x02 \x01(\x0b\x32\x16.product.Specification\x12\x12\n\npublish_id\x18\x03 \x03(\t\x12%\n\x06models\x18\x04 \x03(\x0b\x32\x15.product.ProductModel\x12$\n\x05media\x18\x05 \x03(\x0b\x32\x15.product.ProductMedia\x12+\n\x0csupplierInfo\x18\x06 \x01(\x0b\x32\x15.product.SupplierInfo\"Y\n\x0eProductDetails\x12!\n\x07product\x18\x01 \x01(\x0b\x32\x10.product.Product\x12$\n\x05\x65xtra\x18\x02 \x01(\x0b\x32\x15.product.ProductExtra\"\x7f\n\rFieldSelector\x12\x15\n\rspecification\x18\x01 \x01(\x08\x12\x0e\n\x06option\x18\x02 \x01(\x08\x12\x12\n\npublish_id\x18\x03 \x01(\x08\x12\x0e\n\x06models\x18\x04 \x01(\x08\x12\r\n\x05media\x18\x05 \x01(\x08\x12\x14\n\x0csupplierInfo\x18\x06 \x01(\x08\">\n\x12ProductListRequest\x12(\n\x08selector\x18\x01 \x01(\x0b\x32\x16.product.FieldSelector\"G\n\x0fRetrieveRequest\x12\n\n\x02id\x18\x01 \x01(\x05\x12(\n\x08selector\x18\x02 \x01(\x0b\x32\x16.product.FieldSelector\"`\n\x13ProductQueryRequest\x12\x0b\n\x03sku\x18\x01 \x01(\t\x12\x12\n\npublish_id\x18\x02 \x01(\t\x12(\n\x08selector\x18\x03 \x01(\x0b\x32\x16.product.FieldSelector\"5\n\x11\x41lterModelRequest\x12 \n\x06models\x18\x01 \x03(\x0b\x32\x10.product.Product\"\x8a\x01\n\x0fProductResponse\x12!\n\x04\x63ode\x18\x01 \x01(\x0e\x32\x13.product.ActionCode\x12\x0b\n\x03msg\x18\x02 \x01(\t\x12!\n\x07product\x18\x03 \x01(\x0b\x32\x10.product.Product\x12$\n\x05\x65xtra\x18\x04 \x01(\x0b\x32\x15.product.ProductExtra\"v\n\x15SpecificationResponse\x12!\n\x04\x63ode\x18\x01 \x01(\x0e\x32\x13.product.ActionCode\x12\x0b\n\x03msg\x18\x02 \x01(\t\x12-\n\rspecification\x18\x03 \x01(\x0b\x32\x16.product.Specification\"h\n\x0eOptionResponse\x12!\n\x04\x63ode\x18\x01 \x01(\x0e\x32\x13.product.ActionCode\x12\x0b\n\x03msg\x18\x02 \x01(\t\x12&\n\x06option\x18\x03 \x01(\x0b\x32\x16.product.ProductOption*9\n\rProductStatus\x12\x08\n\x04\x45\x44IT\x10\x00\x12\x11\n\rPUBLISH_READY\x10\x01\x12\x0b\n\x07PUBLISH\x10\x02*\x94\x01\n\nActionCode\x12\x0b\n\x07SUCCESS\x10\x00\x12\x15\n\x11PRODUCT_NOT_FOUND\x10\x01\x12\x1b\n\x17SPECIFICATION_NOT_FOUND\x10\x02\x12\x16\n\x12ILLEGAL_PARAMETERS\x10\x03\x12\x16\n\x12MISSING_PARAMETERS\x10\x04\x12\x15\n\x11STORAGE_EXCEPTION\x10\x05\x32\xdc\x03\n\x11ProductController\x12@\n\x04List\x12\x1b.product.ProductListRequest\x1a\x17.product.ProductDetails\"\x00\x30\x01\x12=\n\x06\x43reate\x12\x17.product.ProductDetails\x1a\x18.product.ProductResponse\"\x00\x12@\n\x08Retrieve\x12\x18.product.RetrieveRequest\x1a\x18.product.ProductResponse\"\x00\x12\x36\n\x06Update\x12\x10.product.Product\x1a\x18.product.ProductResponse\"\x00\x12\x37\n\x07\x44\x65stroy\x12\x10.product.Product\x1a\x18.product.ProductResponse\"\x00\x12\x42\n\x05Query\x12\x1c.product.ProductQueryRequest\x1a\x17.product.ProductDetails\"\x00\x30\x01\x12O\n\x13\x43reateSpecification\x12\x16.product.Specification\x1a\x1e.product.SpecificationResponse\"\x00\x62\x06proto3')
 
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'product_pb2', globals())
 if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
-  _PRODUCTSTATUS._serialized_start=1633
-  _PRODUCTSTATUS._serialized_end=1690
-  _ACTIONCODE._serialized_start=1693
-  _ACTIONCODE._serialized_end=1841
+  _PRODUCTSTATUS._serialized_start=1839
+  _PRODUCTSTATUS._serialized_end=1896
+  _ACTIONCODE._serialized_start=1899
+  _ACTIONCODE._serialized_end=2047
   _PRODUCTOPTION._serialized_start=26
   _PRODUCTOPTION._serialized_end=117
   _SPECIFICATION._serialized_start=119
   _SPECIFICATION._serialized_end=236
-  _PRODUCT._serialized_start=239
-  _PRODUCT._serialized_end=393
-  _PRODUCTMEDIA._serialized_start=395
-  _PRODUCTMEDIA._serialized_end=463
-  _PRODUCTMODEL._serialized_start=465
-  _PRODUCTMODEL._serialized_end=575
-  _PRODUCTEXTRA._serialized_start=578
-  _PRODUCTEXTRA._serialized_end=776
-  _PRODUCTDETAILS._serialized_start=778
-  _PRODUCTDETAILS._serialized_end=867
-  _FIELDSELECTOR._serialized_start=869
-  _FIELDSELECTOR._serialized_end=974
-  _PRODUCTLISTREQUEST._serialized_start=976
-  _PRODUCTLISTREQUEST._serialized_end=1038
-  _RETRIEVEREQUEST._serialized_start=1040
-  _RETRIEVEREQUEST._serialized_end=1111
-  _PRODUCTQUERYREQUEST._serialized_start=1113
-  _PRODUCTQUERYREQUEST._serialized_end=1209
-  _ALTERMODELREQUEST._serialized_start=1211
-  _ALTERMODELREQUEST._serialized_end=1264
-  _PRODUCTRESPONSE._serialized_start=1267
-  _PRODUCTRESPONSE._serialized_end=1405
-  _SPECIFICATIONRESPONSE._serialized_start=1407
-  _SPECIFICATIONRESPONSE._serialized_end=1525
-  _OPTIONRESPONSE._serialized_start=1527
-  _OPTIONRESPONSE._serialized_end=1631
-  _PRODUCTCONTROLLER._serialized_start=1844
-  _PRODUCTCONTROLLER._serialized_end=2320
+  _SUPPLIERINFO._serialized_start=239
+  _SUPPLIERINFO._serialized_end=375
+  _PRODUCT._serialized_start=378
+  _PRODUCT._serialized_end=532
+  _PRODUCTMEDIA._serialized_start=534
+  _PRODUCTMEDIA._serialized_end=602
+  _PRODUCTMODEL._serialized_start=604
+  _PRODUCTMODEL._serialized_end=714
+  _PRODUCTEXTRA._serialized_start=717
+  _PRODUCTEXTRA._serialized_end=960
+  _PRODUCTDETAILS._serialized_start=962
+  _PRODUCTDETAILS._serialized_end=1051
+  _FIELDSELECTOR._serialized_start=1053
+  _FIELDSELECTOR._serialized_end=1180
+  _PRODUCTLISTREQUEST._serialized_start=1182
+  _PRODUCTLISTREQUEST._serialized_end=1244
+  _RETRIEVEREQUEST._serialized_start=1246
+  _RETRIEVEREQUEST._serialized_end=1317
+  _PRODUCTQUERYREQUEST._serialized_start=1319
+  _PRODUCTQUERYREQUEST._serialized_end=1415
+  _ALTERMODELREQUEST._serialized_start=1417
+  _ALTERMODELREQUEST._serialized_end=1470
+  _PRODUCTRESPONSE._serialized_start=1473
+  _PRODUCTRESPONSE._serialized_end=1611
+  _SPECIFICATIONRESPONSE._serialized_start=1613
+  _SPECIFICATIONRESPONSE._serialized_end=1731
+  _OPTIONRESPONSE._serialized_start=1733
+  _OPTIONRESPONSE._serialized_end=1837
+  _PRODUCTCONTROLLER._serialized_start=2050
+  _PRODUCTCONTROLLER._serialized_end=2526
 # @@protoc_insertion_point(module_scope)

@@ -128,7 +128,7 @@ class UpdateRequest(ProtoType):
     stock_status: int
 
     def to_message(self):
-        return stock_pb2.Stock(id=self.id, goods=self.goods, stock_qty=self.stock_qty)
+        return stock_pb2.Stock(id=self.id, goods=self.goods, stock_qty=self.stock_qty, stock_status=self.stock_status)
 
     def from_message(self, *args):
         pass
@@ -214,7 +214,7 @@ class StockServiceClient(object):
     def __init__(self, create_key):
         assert (create_key == StockServiceClient.__create_key),\
             "Stock Service is single instance, please use GlobalProductService.get_instance()"
-        channel = grpc.insecure_channel('192.168.2.75:50052')
+        channel = grpc.insecure_channel('192.168.2.75:50051')
         self.service_stub = stock_pb2_grpc.StockControllerStub(channel)
 
     @classmethod

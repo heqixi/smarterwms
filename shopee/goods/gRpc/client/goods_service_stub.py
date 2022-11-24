@@ -17,7 +17,7 @@ class GoodsServiceClient(object):
     def __init__(self, create_key):
         assert (create_key == GoodsServiceClient.__create_key),\
             "Stock Service is single instance, please use GlobalProductService.get_instance()"
-        channel = grpc.insecure_channel('192.168.31.237:50051')
+        channel = grpc.insecure_channel('192.168.2.75:50051')
 
         self.service_stub = goods_pb2_grpc.GoodsControllerStub(channel)
 
@@ -64,28 +64,41 @@ class GoodsServiceClient(object):
     def create_group(self, req: CreateGroupRequest):
         if not req.is_valid():
             raise Exception('create group illegal req')
+        group_record = GoodsGroupRecord.objects.filter(product_id=req.product_id).first()
+        if group_record:
+            return group_record
         try:
             goods_group = self.service_stub.CreateGroup(req.to_message())
         except Exception as exc:
             print('create goods group remote exception,', exc)
-            raise Exception('create goods group remote exception ')
+            raise Exception('create goods group remote exception %s' % exc)
         else:
-            group_record = self._create_group_record(goods_group)
+            group_record = self._create_group_record(goods_group, req.product_id)
         return group_record
 
     @transaction.atomic
-    def _create_group_record(self, goods_group):
-        group_record = GoodsGroupRecord.objects.create(
-            group_id=goods_group.id,
-            name=goods_group.name
-        )
-        for goods in goods_group:
+    def _create_group_record(self, goods_group, product_id):
+        group_record = GoodsGroupRecord.objects.filter(product_id=product_id)
+        if not group_record:
+            group_record = GoodsGroupRecord.objects.create(
+                group_id=goods_group.id,
+                name=goods_group.name,
+                product_id=product_id
+            )
+        else:
+            group_record.group_id = goods_group.id
+            group_record.name = goods_group.name
+            group_record.save()
+        for goods in goods_group.goods:
             self._create_goods_record(goods, group_record.id)
+        return group_record
 
     def _create_goods_record(self, goods, group_id):
-        return GoodsRecord.objects.create(
-            goods_id=goods.id,
-            goods_code=goods.goods_code,
-            goods_image=goods.goods_image,
-            group_id=group_id
-        )
+        goods_record = GoodsRecord.objects.filter(group_id=group_id, goods_id=goods.id).first()
+        if not goods_record:
+            GoodsRecord.objects.create(
+                goods_id=goods.id,
+                goods_code=goods.goods_code,
+                goods_image=goods.goods_image,
+                group_id=group_id
+            )

@@ -14,8 +14,8 @@ class VisitThrottle(BaseThrottle):
         else:
             ip = request.META.get('HTTP_X_FORWARDED_FOR') if request.META.get(
                 'HTTP_X_FORWARDED_FOR') else request.META.get('REMOTE_ADDR')
-            openid = request.auth.openid
-            appid = request.auth.appid
+
+            openid = request.META.get('HTTP_TOKEN')
             if request.method.lower() == "get":
                 ntime = timezone.now()
                 ctime = ntime - timezone.timedelta(seconds=1)
@@ -23,15 +23,15 @@ class VisitThrottle(BaseThrottle):
                 for i in throttle_ctimelist:
                     i.delete()
                 t_code = Md5.md5(ip)
-                throttle_allocationlist = ListModel.objects.filter(openid=openid, appid=appid, ip=ip,
+                throttle_allocationlist = ListModel.objects.filter(openid=openid, ip=ip,
                                                                    method='get').order_by('id')
                 throttle_count = throttle_allocationlist.count()
                 if throttle_count == 0:
-                    ListModel.objects.create(openid=openid, appid=appid, ip=ip, method="get", t_code=t_code)
+                    ListModel.objects.create(openid=openid, ip=ip, method="get", t_code=t_code)
                     return True
                 else:
                     throttle_last_create_time = throttle_allocationlist.first().create_time
-                    ListModel.objects.create(openid=openid, appid=appid, ip=ip, method="get", t_code=t_code)
+                    ListModel.objects.create(openid=openid, ip=ip, method="get", t_code=t_code)
                     allocation_seconds_balance = (ntime - throttle_last_create_time).seconds
                     data["visit_check"] = throttle_last_create_time
                     if allocation_seconds_balance >= 1:
@@ -48,15 +48,15 @@ class VisitThrottle(BaseThrottle):
                 for i in throttle_ctimelist:
                     i.delete()
                 t_code = Md5.md5(ip)
-                throttle_allocationlist = ListModel.objects.filter(openid=openid, appid=appid, ip=ip,
+                throttle_allocationlist = ListModel.objects.filter(openid=openid, ip=ip,
                                                                    method='post').order_by('id')
                 throttle_count = throttle_allocationlist.count()
                 if throttle_count == 0:
-                    ListModel.objects.create(openid=openid, appid=appid, ip=ip, method="post", t_code=t_code)
+                    ListModel.objects.create(openid=openid, ip=ip, method="post", t_code=t_code)
                     return True
                 else:
                     throttle_last_create_time = throttle_allocationlist.first().create_time
-                    ListModel.objects.create(openid=openid, appid=appid, ip=ip, method="post", t_code=t_code)
+                    ListModel.objects.create(openid=openid, ip=ip, method="post", t_code=t_code)
                     allocation_seconds_balance = (ntime - throttle_last_create_time).seconds
                     data["visit_check"] = throttle_last_create_time
                     if allocation_seconds_balance >= 1:
@@ -73,15 +73,15 @@ class VisitThrottle(BaseThrottle):
                 for i in throttle_ctimelist:
                     i.delete()
                 t_code = Md5.md5(ip)
-                throttle_allocationlist = ListModel.objects.filter(openid=openid, appid=appid, ip=ip,
+                throttle_allocationlist = ListModel.objects.filter(openid=openid, ip=ip,
                                                                    method='put').order_by('id')
                 throttle_count = throttle_allocationlist.count()
                 if throttle_count == 0:
-                    ListModel.objects.create(openid=openid, appid=appid, ip=ip, method="put", t_code=t_code)
+                    ListModel.objects.create(openid=openid, ip=ip, method="put", t_code=t_code)
                     return True
                 else:
                     throttle_last_create_time = throttle_allocationlist.first().create_time
-                    ListModel.objects.create(openid=openid, appid=appid, ip=ip, method="put", t_code=t_code)
+                    ListModel.objects.create(openid=openid, ip=ip, method="put", t_code=t_code)
                     allocation_seconds_balance = (ntime - throttle_last_create_time).seconds
                     data["visit_check"] = throttle_last_create_time
                     if allocation_seconds_balance >= 1:
@@ -98,15 +98,15 @@ class VisitThrottle(BaseThrottle):
                 for i in throttle_ctimelist:
                     i.delete()
                 t_code = Md5.md5(ip)
-                throttle_allocationlist = ListModel.objects.filter(openid=openid, appid=appid, ip=ip,
+                throttle_allocationlist = ListModel.objects.filter(openid=openid, ip=ip,
                                                                    method='patch').order_by('id')
                 throttle_count = throttle_allocationlist.count()
                 if throttle_count == 0:
-                    ListModel.objects.create(openid=openid, appid=appid, ip=ip, method="patch", t_code=t_code)
+                    ListModel.objects.create(openid=openid, ip=ip, method="patch", t_code=t_code)
                     return True
                 else:
                     throttle_last_create_time = throttle_allocationlist.first().create_time
-                    ListModel.objects.create(openid=openid, appid=appid, ip=ip, method="patch", t_code=t_code)
+                    ListModel.objects.create(openid=openid, ip=ip, method="patch", t_code=t_code)
                     allocation_seconds_balance = (ntime - throttle_last_create_time).seconds
                     data["visit_check"] = throttle_last_create_time
                     if allocation_seconds_balance >= 1:
@@ -123,15 +123,15 @@ class VisitThrottle(BaseThrottle):
                 for i in throttle_ctimelist:
                     i.delete()
                 t_code = Md5.md5(ip)
-                throttle_allocationlist = ListModel.objects.filter(openid=openid, appid=appid, ip=ip,
+                throttle_allocationlist = ListModel.objects.filter(openid=openid, ip=ip,
                                                                    method='delete').order_by('id')
                 throttle_count = throttle_allocationlist.count()
                 if throttle_count == 0:
-                    ListModel.objects.create(openid=openid, appid=appid, ip=ip, method="delete", t_code=t_code)
+                    ListModel.objects.create(openid=openid, ip=ip, method="delete", t_code=t_code)
                     return True
                 else:
                     throttle_last_create_time = throttle_allocationlist.first().create_time
-                    ListModel.objects.create(openid=openid, appid=appid, ip=ip, method="delete", t_code=t_code)
+                    ListModel.objects.create(openid=openid, ip=ip, method="delete", t_code=t_code)
                     allocation_seconds_balance = (ntime - throttle_last_create_time).seconds
                     data["visit_check"] = throttle_last_create_time
                     if allocation_seconds_balance >= 1:

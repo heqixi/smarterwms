@@ -435,8 +435,7 @@ export default {
       var _this = this
       _this.$q.dialog({
         component: NewProductsDialog,
-        productId: productId,
-        merchant: product.store.merchant
+        productId: productId
       }).onOk((saveProduct) => {
         product.sku = saveProduct.sku
         product.desc = saveProduct.desc

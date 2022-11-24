@@ -95,7 +95,7 @@ export default {
           type: 'text',
           align: 'center',
           fieldMap: supplier => {
-            return supplier.supplier_name
+            return supplier ? supplier.supplier_name : '未知'
           },
           style: {
             width: '100px',

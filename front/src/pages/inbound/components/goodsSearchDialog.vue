@@ -37,86 +37,6 @@ export default {
   name: 'goodsSearchDialog',
   data () {
     var _this = this
-    const colPurchasePlan = {
-      name: 'suppliers',
-      required: true,
-      label: '供应商',
-      align: 'center',
-      type: 'table',
-      field: 'purchases',
-      rowKey: 'id',
-      keepExpand: true,
-      rowHeight: 40,
-      style: {
-        maxWidth: '600px',
-        width: '600px',
-        whiteSpace: 'normal'
-      },
-      validate: purchases => {
-        return purchases && purchases.length > 0
-      },
-      errMsg: '请添加或选择采购方案',
-      nodata: {
-        hint: '请添加采购链接',
-        click: (goods) => {
-          return new Promise((resolve, reject) => {
-            const goodsList = _this.$refs.table.getAllLoadGoods()
-            const shortageGoods = goodsList.filter(goods => { return goods.stocks.stock_reserve > (goods.stocks.stock_onhand + goods.stocks.stock_purchased) })
-            const noPurchaseGoods = shortageGoods.filter(goods => { return !goods.purchases || goods.purchases.length <= 0 })
-            _this.selectPurchaseForGoods(noPurchaseGoods)
-          })
-        }
-      },
-      subColumns: [
-        {
-          name: 'supplier_name',
-          label: '供应商名称',
-          field: 'supplier',
-          type: 'text',
-          class: 'col-4 text-center',
-          fieldMap: supplier => { return supplier.supplier_name }
-        },
-        {
-          name: 'tag',
-          label: '标签',
-          field: 'tag',
-          type: 'text',
-          class: 'col-3 text-center'
-        },
-        {
-          name: 'price',
-          label: '价格',
-          field: 'price',
-          type: 'number',
-          class: 'col-1 text-center'
-        },
-        {
-          name: 'url',
-          label: '链接',
-          field: 'url',
-          type: 'url',
-          class: 'col-1 text-center'
-        },
-        {
-          name: 'action',
-          label: this.$t('action'),
-          type: 'actions',
-          class: 'col-3 text-center',
-          align: 'center',
-          actions: [
-            {
-              name: 'set_default',
-              label: '选择',
-              tip: '选择',
-              click: (goods, purchasePlan) => {
-                console.log('set as default purchase plan ', goods, purchasePlan)
-                _this.onPurchasePlanChoose(goods, purchasePlan)
-              }
-            }
-          ]
-        }
-      ]
-    }
     return {
       openid: '',
       login_name: '',
@@ -146,17 +66,9 @@ export default {
           click: selectedList => {
             console.log('purchase selectedList, ', selectedList.length)
             if (selectedList.length <= 0) {
-              const goodsList = _this.$refs.table.getAllLoadGoods()
-              if (goodsList.length >= 500) {
-                _this.filterPurchaseReadyGoods(goodsList)
-              } else {
-                _this.$refs.table.getListNext(500).then(res => {
-                  const goodsList = _this.$refs.table.getAllLoadGoods()
-                  _this.filterPurchaseReadyGoods(goodsList)
-                })
-              }
+              _this.purchaseShortageGoods()
             } else {
-              _this.onGoodsSelect(selectedList)
+              _this.getGoodsPurchases(selectedList)
             }
           }
         },
@@ -246,18 +158,6 @@ export default {
           },
           sortable: true
         },
-        // {
-        //   name: 'stock_damage',
-        //   label: '损坏库存',
-        //   field: 'stocks',
-        //   type: 'number',
-        //   align: 'center',
-        //   sortable: true,
-        //   edit: true,
-        //   fieldMap: stocks => {
-        //     return stocks.stock_damage
-        //   }
-        // },
         {
           name: 'stock_ship',
           label: '出货库存',
@@ -272,43 +172,78 @@ export default {
           fieldMap: stocks => {
             return stocks.stock_ship
           }
-        },
-        colPurchasePlan // 因为要显式调用这个对象，所以要显式声明
+        }
       ],
       filter: '',
       token: LocalStorage.getItem('openid')
     }
   },
   methods: {
-    filterPurchaseReadyGoods (goodsList) {
-      const shortageGoods = goodsList.filter(goods => { return goods.stocks.stock_reserve > (goods.stocks.stock_onhand + goods.stocks.stock_purchased) })
-      const noPurchaseGoods = shortageGoods.filter(goods => { return !goods.purchases || goods.purchases.length <= 0 })
-      const purchaseReadyGoods = shortageGoods.filter(goods => { return goods.purchases && goods.purchases.length > 0 })
-      console.log('all goods ', goodsList.length, ', shortage length ', shortageGoods.length, ',purchase ready ', purchaseReadyGoods.length)
+    async purchaseShortageGoods () {
+      const _this = this
+      const shortageGoods = await _this.getAndFilterShortageGoods(_this.$refs.table.getAllLoadGoods())
+      if (shortageGoods.length <= 0) {
+        this.$q.notify({
+          message: '暂无库存短缺的货物',
+          icon: 'check',
+          color: 'green'
+        })
+        return
+      }
+      await _this.getGoodsPurchases(shortageGoods)
+    },
+    async getAndFilterShortageGoods (loadedGoods) {
+      loadedGoods.forEach(goods => {
+        goods.stocks.shortage = goods.stocks.stock_reserve - (goods.stocks.stock_onhand + goods.stocks.stock_purchased)
+      })
+      loadedGoods.sort((x, y) => { return y.stocks.shortage - x.stocks.shortage })
+      var allShortageGoods
+      if (loadedGoods[loadedGoods.length - 1].shortage > 0) {
+        // Load all shortage stock
+        allShortageGoods = await getauth('goods/?&goods_stocks=aggregation&order=stock__shortage__desc&filter=stock__shortage').results
+        console.log('get all shortage goods ', allShortageGoods)
+      } else {
+        allShortageGoods = loadedGoods.filter(goods => { return goods.stocks.shortage > 0 })
+      }
+      return allShortageGoods
+    },
+    async getGoodsPurchases (goodsList) {
+      console.log('get shortage goods purchase ', goodsList)
+      const goodsFilter = goodsList.map(goods => { return goods.id }).join('&goods=')
+      const purchases = await getauth('supplier/purchase?goods_settings=true&goods=' + goodsFilter)
+      console.log('shortage goods purchase purchase ', purchases)
+      goodsList.forEach(goods => {
+        purchases.forEach(purchase => {
+          const matchPurchaseSettings = purchase.goods_settings.find(s => { return s.goods === goods.id })
+          if (matchPurchaseSettings) {
+            if (!goods.purchase) {
+              goods.purchase = purchase
+              goods.purchase_settings = matchPurchaseSettings
+            } else if (goods.purchase_settings.level > matchPurchaseSettings.level) {
+              goods.purchase = purchase
+              goods.purchase_settings = matchPurchaseSettings
+            }
+          }
+        })
+      })
+      const noPurchaseGoods = goodsList.filter(goods => { return !goods.purchase })
+      const purchaseReadyGoods = goodsList.filter(goods => { return goods.purchase })
+      console.log('all goods ', goodsList.length, ',purchase ready ', purchaseReadyGoods.length)
       if (noPurchaseGoods.length > 0) {
         this.$q.notify({
           message: '请先完善采购链接',
           icon: 'check',
           color: 'green'
         })
-        this.selectPurchaseForGoods(noPurchaseGoods, () => {
-          const purchaseReadyGoods = shortageGoods.filter(goods => { return goods.purchases && goods.purchases.length > 0 })
+        await this.selectPurchaseForGoods(noPurchaseGoods, () => {
+          const purchaseReadyGoods = goodsList.filter(goods => {
+            return goods.purchase
+          })
+          console.log('after select purchase, ready ', purchaseReadyGoods.length)
           this.onGoodsSelect(purchaseReadyGoods)
         })
       } else {
         this.onGoodsSelect(purchaseReadyGoods)
-      }
-    },
-    onPurchasePlanChoose (goods, purchasePlan) {
-      if (goods.purchases.length > 1) {
-        for (let i = goods.purchases.length - 1; i >= 0; i--) {
-          if (goods.purchases[i].id === purchasePlan.id) {
-            const tmp = goods.purchases.splice(i, 1)[0]
-            const firstObj = goods.purchases.splice(0, 1, tmp)[0]
-            goods.purchases.splice(i, 0, firstObj)
-            break
-          }
-        }
       }
     },
     sortGoodsByDefaultPurchasePlan (goodsLeft, goodsRight) {
@@ -471,7 +406,7 @@ export default {
       var _this = this
       if (!_this.purchases) {
         _this.loading = true
-        _this.purchases = await getauth('supplier/purchase/?supplier=true', {})
+        _this.purchases = await getauth('supplier/purchase/?supplier=true&goods_settings=true', {})
         _this.loading = false
       }
       _this.$q.dialog({
@@ -493,8 +428,8 @@ export default {
               break
             }
           }
-          const goodsExist = purchase.goods.find(goodsId => {
-            return goods.id === goodsId
+          const goodsExist = purchase.goods_settings.find(settings => {
+            return goods.id === settings.goods
           })
           if (goodsExist) {
             console.error('goods already has this purchase plan ', goods, purchase)
@@ -505,9 +440,9 @@ export default {
         console.log('after select purchase plan ', noPurchaseGoods.length)
         if (goods2Add.length > 0) {
           _this.addGoodsToPurchasePlan(purchase, goods2Add).then(res => {
-            goods2Add.forEach(goods => {
-              purchase.goods.push(goods)
-            })
+            // goods2Add.forEach(goods => {
+            //   purchase.goods.push(goods)
+            // })
           })
         } else {
           console.log('no thing to add')
@@ -717,23 +652,6 @@ export default {
           icon: 'close',
           color: 'negative'
         })
-        return
-      }
-      let valid = true
-      selectGoods.forEach(goods => {
-        this.columns.forEach(col => {
-          if (col.validate && !col.validate(goods[col.field])) {
-            valid = false
-            this.$q.notify({
-              message: col.errMsg,
-              icon: 'close',
-              color: 'negative'
-            })
-          }
-        })
-        goods.purchase = goods.purchases[0]
-      })
-      if (!valid) {
         return
       }
       this.$emit('onGoodsSelect', selectGoods)

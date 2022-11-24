@@ -1,10 +1,12 @@
-import BaseService from 'boot/baseservice';
+import BaseService from 'boot/baseservice'
 
-const prepath = 'store';
+const prepath = 'store'
+
+const fetchBoxPrePath = 'fetch'
 
 class FetchService extends BaseService {
   getFetchMedias (fetchId) {
-    return this.getPromise('GET', prepath + '/medias', { fetch_id: fetchId });
+    return this.getPromise('GET', fetchBoxPrePath + '/medias', { fetch_id: fetchId });
   }
 
   deleteArea (id) {
@@ -20,11 +22,11 @@ class FetchService extends BaseService {
   }
 
   receiveProduct (ids) {
-    return this.getPromise('POST', prepath + '/receive', { fetch_list: ids});
+    return this.getPromise('POST', fetchBoxPrePath + '/receive', { fetch_list: ids});
   }
 
   getFetchList (params) {
-    return this.getPromise('GET', prepath, params);
+    return this.getPromise('GET', fetchBoxPrePath, params);
   }
 
   getListPrevOrNext (url) {

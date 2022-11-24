@@ -1550,9 +1550,9 @@ export default {
     }
     if (LocalStorage.has('auth')) {
       _this.authin = '1'
-      _this.initWebSocket()
+      // _this.initWebSocket()
       _this.staffType()
-      _this.Readnum()
+      // _this.Readnum()
     } else {
       LocalStorage.set('staff_type', 'Admin')
       _this.authin = '0'

@@ -106,8 +106,7 @@ class GoodsService(generics.ModelService):
 
     @transaction.atomic
     def CreateGroup(self, request, context):
-        print('Create goods group ')
-        openid = 'c240c14ea66ef48bc3c5645735a715af'
+        openid = 'd8ee5135188748805e32f3db8e64fbdf'
         creater = 'admin'
         group_name = request.name
         if not group_name:
@@ -125,7 +124,7 @@ class GoodsService(generics.ModelService):
                 if not (goods.goods_code and goods.goods_image):
                     return MissingParametersError('Missing goods sku or goods image').to_message()
                 goods_obj = Goods.objects.filter(goods_code=goods.goods_code, openid=openid).first()
-                if not goods:
+                if not goods_obj:
                     goods_obj = Goods.objects.create(
                         openid=openid,
                         creater=creater,

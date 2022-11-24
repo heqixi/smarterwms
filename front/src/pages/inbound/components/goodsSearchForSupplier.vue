@@ -21,7 +21,6 @@
 <script>
 import GoodsSearchDialog from 'components/Share/goodsSearchTable'
 import GoodsSelected from './goodsSelectDialog'
-import { postauth } from 'boot/axios_request'
 
 export default {
   name: 'GoodsSearchForSupplier',
@@ -38,6 +37,31 @@ export default {
             console.log('selectedList, ', selectedList.length)
             _this.$emit('ok', { goods: selectedList, action: 'ok' })
             _this.hide()
+          }
+        },
+        {
+          name: '添加',
+          label: '添加产品',
+          tip: '添加产品',
+          click: selectedGoods => {
+            let path = 'goods/?group=true'
+            const goodsExcludeParams = _this.$refs.goods_table.getAllLoadGoods().map(g => { return g.id }).join('&exclude=')
+            if (goodsExcludeParams) {
+              path += `&exclude=${goodsExcludeParams}`
+            }
+            _this.$q.dialog({
+              component: GoodsSelected,
+              path: path
+            }).onOk((selectGoods) => {
+              console.log('add select goods to purchase plan ', selectGoods)
+              _this.$emit('ok', { goods: selectGoods })
+              const goodsOfPurchased = _this.$refs.goods_table.getAllLoadGoods()
+              selectGoods.forEach(goods => {
+                if (!goodsOfPurchased.find(g => g.id === goods.id)) {
+                  _this.$refs.goods_table.prependGoods(goods)
+                }
+              })
+            })
           }
         }
       ],
@@ -68,13 +92,13 @@ export default {
           }
         },
         {
-          name: 'product',
+          name: 'group',
           required: true,
           label: '在线商品',
           align: 'center',
           type: 'table',
           keepExpand: true,
-          field: 'products',
+          field: 'group',
           style: {
             maxWidth: '150px',
             width: '150px',
@@ -83,9 +107,9 @@ export default {
           fieldMap: products => { return products || [] },
           subColumns: [
             {
-              name: 'product_sku',
-              label: '关联全球商品',
-              field: 'sku',
+              name: 'group_name',
+              label: '分组名称',
+              field: 'name',
               type: 'text',
               class: 'col-7 text-center'
             },
@@ -99,114 +123,102 @@ export default {
                 {
                   name: 'select_product',
                   label: '选择',
-                  tip: '选择产品的全部子SKU',
-                  click: (goods, product) => {
-                    console.log('set as default purchase plan ', goods, product)
-                    _this.selectProductGoods(goods, product)
-                  }
-                }
-              ]
-            }
-          ]
-        },
-        {
-          name: 'suppliers',
-          required: true,
-          label: '供应商',
-          align: 'center',
-          type: 'table',
-          field: 'purchases',
-          keepExpand: true,
-          style: {
-            maxWidth: '500px',
-            width: '500px',
-            whiteSpace: 'normal'
-          },
-          subColumns: [
-            {
-              name: 'supplier_name',
-              label: '供应商名称',
-              field: 'supplier',
-              type: 'text',
-              class: 'col-3 text-center',
-              fieldMap: supplier => { return supplier.supplier_name }
-            },
-            {
-              name: 'tag',
-              label: '标签',
-              field: 'tag',
-              type: 'text',
-              class: 'col-3 text-center'
-            },
-            {
-              name: 'price',
-              label: '价格',
-              field: 'price',
-              type: 'number',
-              class: 'col-2 text-center'
-            },
-            {
-              name: 'url',
-              label: '链接',
-              field: 'url',
-              type: 'url',
-              class: 'col-1 text-center'
-            },
-            {
-              name: 'action',
-              label: this.$t('action'),
-              type: 'actions',
-              class: 'col-3 text-center',
-              align: 'center',
-              actions: [
-                {
-                  name: 'set_default',
-                  label: '设为默认',
-                  tip: '设为默认',
-                  click: (goods, purchasePlan) => {
-                    console.log('set as default purchase plan ', goods, purchasePlan)
-                    if (purchasePlan.level === 0) {
-                      this.$q.notify({
-                        message: '已经是默认采购链接',
-                        icon: 'check',
-                        color: 'green'
-                      })
-                      return
-                    }
-                    postauth('supplier/purchase/set_default', {
-                      goods: goods.id,
-                      purchase: purchasePlan.id
-                    }).then(res => {
-                      for (let i = 0; i < goods.purchases.length; i++) {
-                        if (goods.purchases[i].id === purchasePlan.id) {
-                          const defaultPurchase = goods.purchases.splice(i, 1)[0]
-                          goods.purchases.unshift(defaultPurchase)
-                          break
-                        }
-                      }
-                    })
+                  tip: '选择同一分组的其他货物',
+                  click: (goods, group) => {
+                    console.log('select goods in same group ', goods, group)
+                    _this.selectGroupGoods(goods, group)
                   }
                 }
               ]
             }
           ]
         }
+        // {
+        //   name: 'suppliers',
+        //   required: true,
+        //   label: '供应商',
+        //   align: 'center',
+        //   type: 'table',
+        //   field: 'purchases',
+        //   keepExpand: true,
+        //   style: {
+        //     maxWidth: '500px',
+        //     width: '500px',
+        //     whiteSpace: 'normal'
+        //   },
+        //   subColumns: [
+        //     {
+        //       name: 'supplier_name',
+        //       label: '供应商名称',
+        //       field: 'supplier',
+        //       type: 'text',
+        //       class: 'col-3 text-center',
+        //       fieldMap: supplier => { return supplier.supplier_name }
+        //     },
+        //     {
+        //       name: 'tag',
+        //       label: '标签',
+        //       field: 'tag',
+        //       type: 'text',
+        //       class: 'col-3 text-center'
+        //     },
+        //     {
+        //       name: 'price',
+        //       label: '价格',
+        //       field: 'price',
+        //       type: 'number',
+        //       class: 'col-2 text-center'
+        //     },
+        //     {
+        //       name: 'url',
+        //       label: '链接',
+        //       field: 'url',
+        //       type: 'url',
+        //       class: 'col-1 text-center'
+        //     },
+        //     {
+        //       name: 'action',
+        //       label: this.$t('action'),
+        //       type: 'actions',
+        //       class: 'col-3 text-center',
+        //       align: 'center',
+        //       actions: [
+        //         {
+        //           name: 'set_default',
+        //           label: '设为默认',
+        //           tip: '设为默认',
+        //           click: (goods, purchasePlan) => {
+        //             console.log('set as default purchase plan ', goods, purchasePlan)
+        //             if (purchasePlan.level === 0) {
+        //               this.$q.notify({
+        //                 message: '已经是默认采购链接',
+        //                 icon: 'check',
+        //                 color: 'green'
+        //               })
+        //               return
+        //             }
+        //             postauth('supplier/purchase/set_default', {
+        //               goods: goods.id,
+        //               purchase: purchasePlan.id
+        //             }).then(res => {
+        //               for (let i = 0; i < goods.purchases.length; i++) {
+        //                 if (goods.purchases[i].id === purchasePlan.id) {
+        //                   const defaultPurchase = goods.purchases.splice(i, 1)[0]
+        //                   goods.purchases.unshift(defaultPurchase)
+        //                   break
+        //                 }
+        //               }
+        //             })
+        //           }
+        //         }
+        //       ]
+        //     }
+        //   ]
+        // }
       ]
     }
   },
   methods: {
-    addSelectGoods (goodsList, product) {
-      const allLoadGoods = this.$refs.goods_table.getAllLoadGoods()
-      goodsList.forEach(goods => {
-        const exist = allLoadGoods.find(existGoods => { return existGoods.id === goods.id })
-        if (!exist) {
-          goods.products = [product]
-          goods.purchases = []
-          this.$refs.goods_table.prependGoods(goods)
-        }
-      })
-      this.$refs.goods_table.addSelect(goodsList)
-    },
     clearSelect () {
       this.$refs.goods_table.clearSelect()
     },
@@ -216,16 +228,16 @@ export default {
     hide () {
       this.$refs[this.refName].hide()
     },
-    selectProductGoods (goods, product) {
+    selectGroupGoods (goods, group) {
       var _this = this
       _this.$q.dialog({
         component: GoodsSelected,
-        goods: product.goods
+        goods: group.goods
       }).onOk((selectGoods) => {
         if (!selectGoods.find(goodsSelected => { return goodsSelected.id === goods.id })) {
           selectGoods.push(goods)
         }
-        console.log('emit goods, to select purchase ', selectGoods)
+        console.log('emit select goods of same group', selectGoods)
         _this.$emit('ok', { goods: selectGoods, action: 'addPurchase' })
       })
     }

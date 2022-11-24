@@ -228,22 +228,22 @@ class OrderService(object):
                 # 状态修改为12，释放已经锁定的库存
                 for detail in ShopeeOrderDetailModel.objects.filter(openid=openid, shopee_order=order):
                     if detail.stock:
-                        qty = detail.stock.qty
-                        self.stock_service.back_stock(detail.stock, is_delete=True)  # 强制出货, 无须预留库存
-                        stock_bean = OrderDetailStockBeanFactory(detail).create().set_stock_qty(qty)
-                        detail.stock = self.stock_service.add_shipping_stock(stock_bean)
+                        # qty = detail.stock.stock_qty
+                        # self.stock_service.back_stock(detail.stock, is_delete=True)  # 强制出货, 无须预留库存
+                        # stock_bean = OrderDetailStockBeanFactory(detail).create().set_stock_qty(qty)
+                        detail.stock = self.stock_service.force_ship_stock(detail.stock)
                 for modify in ShopeeOrderModifyModel.objects.filter(openid=openid, shopee_order=order):
                     if modify.stock:
-                        qty = modify.stock.qty
-                        self.stock_service.back_stock(modify.stock, is_delete=True)  # 强制出货, 无须预留库存
-                        stock_bean = OrderModifyStockBeanFactory(modify).create().set_stock_qty(qty)
-                        modify.stock = self.stock_service.add_shipping_stock(stock_bean)
+                        # qty = modify.stock.stock_qty
+                        # self.stock_service.back_stock(modify.stock, is_delete=True)  # 强制出货, 无须预留库存
+                        # stock_bean = OrderModifyStockBeanFactory(modify).create().set_stock_qty(qty)
+                        modify.stock = self.stock_service.force_ship_stock(modify.stock)
                 for package in ShopeeOrderPackageModel.objects.filter(openid=openid, shopee_order=order):
                     if package.stock:
-                        qty = package.stock.qty
-                        self.stock_service.back_stock(package.stock, is_delete=True)  # 强制出货, 无须预留库存
-                        stock_bean = OrderPackageStockBeanFactory(package).create().set_stock_qty(qty)
-                        package.stock = self.stock_service.add_shipping_stock(stock_bean)
+                        # qty = package.stock.stock_qty
+                        # self.stock_service.back_stock(package.stock, is_delete=True)  # 强制出货, 无须预留库存
+                        # stock_bean = OrderPackageStockBeanFactory(package).create().set_stock_qty(qty)
+                        package.stock = self.stock_service.force_ship_stock(package.stock)
                 order.handle_status = OrderHandleStatus.FORCED_SHIPMENT
                 order.save()
 
@@ -1105,6 +1105,7 @@ class OrderService(object):
             except Exception as e:
                 logger.warning('Order Sync Global Product Failed: %s\n%s', e, traceback.format_exc())
             for item in item_list:
+                print('save_order_detail item list, ', item_list)
                 model_id = item.get('model_id')
                 if not tmp_map.get(model_id):
                     tmp_map[model_id] = []
@@ -1170,6 +1171,7 @@ class OrderService(object):
                         self.stock_service.update_stock_qty(order_detail.stock, 0)
                 order_detail.save()
                 tmp_map.get(model_id).append(order_detail.id)
+            self.global_service.register_supplier_info(map(lambda i: i.get('item_id'), item_list))
 
     def _sync_goods_(self, store_model_ids):
         # store_product_model -> stor_product -> global_product -> global_product_model

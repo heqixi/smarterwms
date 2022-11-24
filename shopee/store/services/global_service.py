@@ -10,6 +10,7 @@ from store.common import StoreProductType, StoreType, MediaType
 from store.models import StoreModel, StoreProductModel, StoreProductMedia, StoreProductVariantModel, \
     StoreProductOptionModel, StoreProductOptionItemModel, StoreProductPriceInfoModel, StoreProductVariantStock
 from store.serializers import StoreGlobalProductEmitDataSerializer
+from supplier.supplier_register import SupplierRegister
 from utils import shopee, spg
 
 logger = logging.getLogger()
@@ -289,17 +290,18 @@ class GlobalService(object):
         return item_map
 
     def emit_goods(self, global_product):
-        from globalproduct.gRpc.client.global_product import ProductServiceClient
-        try:
-            product = ProductServiceClient.get_instance().create_from_shopee(
-                StoreGlobalProductEmitDataSerializer(global_product).data)
-        except Exception as e:
-            logger.warning('GLOBAL_PRODUCT_SYNC_EVENT Error: %s\n%s', e, traceback.format_exc())
-        else:
-            if not product:
-                logger.error('Create product %s fail %s' % global_product.product_sku)
-            else:
-                logger.info('Create product %s success', global_product.product_sku)
+        pass
+        # from globalproduct.gRpc.client.global_product import ProductServiceClient
+        # try:
+        #     product = ProductServiceClient.get_instance().create_from_shopee(
+        #         StoreGlobalProductEmitDataSerializer(global_product).data)
+        # except Exception as e:
+        #     logger.warning('GLOBAL_PRODUCT_SYNC_EVENT Error: %s\n%s', e, traceback.format_exc())
+        # else:
+        #     if not product:
+        #         logger.error('Create product %s fail %s' % global_product.product_sku)
+        #     else:
+        #         logger.info('Create product %s success', global_product.product_sku)
 
     def refresh_global_product(self, merchant_id, item_id_list, callback=None):
         """
@@ -502,6 +504,40 @@ class GlobalService(object):
                              params=variation_info)
         logger.info('init tier variation %s ' % ret)
         return True
+
+    def register_supplier_info(self, item_id_list):
+        from goods.gRpc.client.goods_service_stub import GoodsServiceClient, CreateGroupRequest
+        from goods.gRpc.client.types.goods import Goods
+        global_products = []
+        for item_id in item_id_list:
+            store_product = StoreProductModel.objects.filter(product_id=item_id).first()
+            if not store_product:
+                logger.error('register supplier info can not find product of item id %s', item_id)
+                continue
+            global_products.append(store_product.global_product.first())
+        if not global_products:
+            logger.warning('No global product of item id list found ', item_id_list)
+        for global_product in global_products:
+            goods = []
+            for variant in global_product.product_variant.all():
+                goods.append(Goods(
+                    goods_code=variant.model_sku,
+                    goods_image=self._get_variant_image(variant)
+                ))
+            req = CreateGroupRequest(name=global_product.product_sku, goods=goods, product_id=global_product.id)
+            try:
+                GoodsServiceClient.get_instance().create_group(req)
+                SupplierRegister.get_instance().register_purchase_plan(product_id=global_product.id)
+            except Exception as e:
+                logger.error('Create goods group fail %s', e)
+                continue
+
+    def _get_variant_image(self, variant: StoreProductVariantModel):
+        index = variant.option_item_index.split(',')[0]
+        option = variant.store_product.product_option.filter(index=0).first()
+        first_option_item = StoreProductOptionItemModel.objects.filter(
+            store_product=variant.store_product, index=index, store_product_option=option).first()
+        return first_option_item.image_url if first_option_item else None
 
     def __split_list(self, iterable, n=1):
         """

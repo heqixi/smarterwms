@@ -37,7 +37,7 @@ class PurchasePlan(BaseModel):
     class Relative_Fields(object):
         PURCHASE_ASN_DETAILS = 'purchase_asn_details'
 
-        GOODS_SETTENGS = 'goods_settings'
+        GOODS_SETTINGS = 'goods_settings'
 
     image_url = models.CharField(max_length=1024, verbose_name="Purchase Plan Image Url", blank=True, null=True, default=None)
     supplier = models.ForeignKey(ListModel, default=None, null=True, on_delete=models.SET_NULL,
@@ -58,7 +58,7 @@ class PurchasePlan(BaseModel):
 
 class PurchasePlanGoodsSetting(BaseModel):
     plan = models.ForeignKey(PurchasePlan, on_delete=models.CASCADE,
-                             related_name=PurchasePlan.Relative_Fields.GOODS_SETTENGS)
+                             related_name=PurchasePlan.Relative_Fields.GOODS_SETTINGS)
     goods = models.PositiveIntegerField(verbose_name='goods id of PurchasePlan')
     level = models.PositiveIntegerField(default=0, verbose_name='Goods Purchase Plan Level')
 

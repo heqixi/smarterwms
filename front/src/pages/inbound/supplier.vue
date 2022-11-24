@@ -237,11 +237,14 @@ export default {
     }
   },
   methods: {
-    viewGoodsOfPurchasePlan (supplier, purchasePlan) {
-      var _this = this
+    async viewGoodsOfPurchasePlan (supplier, purchasePlan) {
+      const _this = this
+      if (!purchasePlan.goods) {
+        purchasePlan.goods = await getauth(_this.pathname + `purchase/goods?id=${purchasePlan.id}`)
+      }
       const goodsParams = purchasePlan.goods.join('&id_in=')
       const goodsIds = purchasePlan.goods
-      let path = `goods/?purchases=details&products=true&supplier=true&purchase_filter=${purchasePlan.id}`
+      let path = 'goods/?group=true'
       if (goodsParams) {
         path += `&id_in=${goodsParams}`
       }
@@ -285,52 +288,15 @@ export default {
           }
         ]
       }).onOk(operation => {
-        const selectedGoods = operation.goods
-        console.log('selectedGoods on ok', selectedGoods)
-        const goods2Add = selectedGoods.filter(goods => {
-          return purchasePlan.goods.find(goodsId => {
-            return goodsId === goods.id
-          }) === undefined
-        })
-        if (goods2Add.length > 0) {
-          const formData = {
-            id: purchasePlan.id,
-            goods: goods2Add.map(goods => goods.id),
-            add: true
-          }
-          putauth('supplier/purchase/' + purchasePlan.id + '/', formData).then(res => {
-            console.log('add goods to purchase success ', res)
-            _this.refresh()
-          })
-        }
+        console.log('selected goods on ok ', operation.goods)
+        _this.addGoodsToPurchaseRemote(operation.goods, purchasePlan)
       })
     },
-    addGoodsToPurchasePlan (supplier, purchasePlan) {
-      var _this = this
-      _this.$q.dialog({
-        component: GoodsSearchForSupplier,
-        refName: 'addGoodsDialog'
-      }).onOk(selectedGoods => {
-        console.log('addGoodsToPurchasePlan on ok', selectedGoods)
-        if (selectedGoods.length <= 0) {
-          _this.$q.notify({
-            message: '你似乎没有选择任何商品',
-            icon: 'close',
-            color: 'negative'
-          })
-          return
-        }
-        const goods2Add = selectedGoods.filter(goods => {
-          return purchasePlan.goods.find(goodsId => { return goodsId === goods.id }) === undefined
-        })
-        if (goods2Add.length <= 0) {
-          _this.$q.notify({
-            message: '无须重复添加产品',
-            icon: 'close',
-            color: 'negative'
-          })
-          return
-        }
+    addGoodsToPurchaseRemote (selectedGoods, purchasePlan) {
+      const goods2Add = selectedGoods.filter(goods => {
+        return purchasePlan.goods.find(goodsId => { return goodsId === goods.id }) === undefined
+      })
+      if (goods2Add.length > 0) {
         const formData = {
           id: purchasePlan.id,
           goods: goods2Add.map(goods => goods.id),
@@ -338,9 +304,49 @@ export default {
         }
         putauth('supplier/purchase/' + purchasePlan.id + '/', formData).then(res => {
           console.log('add goods to purchase success ', res)
+          goods2Add.forEach(goods => { purchasePlan.goods.unshift(goods.id) })
+          console.log(purchasePlan.goods)
         })
-      })
+      } else {
+        console.log('no goods need to be add to purchase plan')
+      }
     },
+    // addGoodsToPurchasePlan (supplier, purchasePlan) {
+    //   var _this = this
+    //   _this.$q.dialog({
+    //     component: GoodsSearchForSupplier,
+    //     refName: 'addGoodsDialog'
+    //   }).onOk(selectedGoods => {
+    //     console.log('add goods to purchase plan on ok', selectedGoods)
+    //     if (selectedGoods.length <= 0) {
+    //       _this.$q.notify({
+    //         message: '你似乎没有选择任何商品',
+    //         icon: 'close',
+    //         color: 'negative'
+    //       })
+    //       return
+    //     }
+    //     const goods2Add = selectedGoods.filter(goods => {
+    //       return purchasePlan.goods.find(goodsId => { return goodsId === goods.id }) === undefined
+    //     })
+    //     if (goods2Add.length <= 0) {
+    //       _this.$q.notify({
+    //         message: '无须重复添加产品',
+    //         icon: 'close',
+    //         color: 'negative'
+    //       })
+    //       return
+    //     }
+    //     const formData = {
+    //       id: purchasePlan.id,
+    //       goods: goods2Add.map(goods => goods.id),
+    //       add: true
+    //     }
+    //     putauth('supplier/purchase/' + purchasePlan.id + '/', formData).then(res => {
+    //       console.log('add goods to purchase success ', res)
+    //     })
+    //   })
+    // },
     deleteSupplier (supplier) {
       console.log('deleteSupplier ', supplier)
       var _this = this

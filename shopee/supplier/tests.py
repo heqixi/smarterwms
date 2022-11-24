@@ -17,20 +17,21 @@ def _get_variant_image(variant: StoreProductVariantModel):
 
 class TestClass(TestCase):
 
+    test_sku = 'test_product_sku_' + str(int(time.time()))
+
     def setUp(self) -> None:
-        self.test_product_sku = 'test_product_sku_' + str(int(time.time()))
         product = self._create_store_product()
+        self._create_goods_group(product)
 
     def test_register_purchase_plan(self):
         from supplier.supplier_register import SupplierRegister
-        print(self.test_product_sku)
-        product = StoreProductModel.objects.filter(product_sku=self.test_product_sku).first()
-        self._create_goods_group(product)
+        product = StoreProductModel.objects.filter(product_sku=self.test_sku).first()
         purchase_record = SupplierRegister.get_instance().register_purchase_plan(product.id)
         assert purchase_record
         assert purchase_record.id
         assert purchase_record.purchase_id
         assert purchase_record.product_id == product.id
+        print('test complete')
 
     def _create_goods_group(self, product: StoreProductModel):
         from goods.gRpc.client.goods_service_stub import GoodsServiceClient, CreateGroupRequest
@@ -41,14 +42,17 @@ class TestClass(TestCase):
                 goods_code=variant.model_sku,
                 goods_image=_get_variant_image(variant)
             ))
-        req = CreateGroupRequest(name=product.product_sku, goods=goods)
+        req = CreateGroupRequest(name=product.product_sku, goods=goods, product_id=product.id)
         group_record = GoodsServiceClient.get_instance().create_group(req)
         assert group_record
         assert group_record.id
         assert group_record.name == req.name
         goods_records = GoodsRecord.objects.filter(group_id=group_record.id).all()
         assert goods_records.count() == len(goods)
+        for goods_record in goods_records:
+            print('goods record ', goods_record.id, goods_record.goods_code)
         for g in goods:
+            print('goods code ', g.goods_code)
             goods_record = goods_records.filter(goods_code=g.goods_code).first()
             assert goods_record
             assert goods_record.goods_id
@@ -59,9 +63,9 @@ class TestClass(TestCase):
         store_br = StoreModel.objects.create(name='Brazil', uid='2', type=2, platform=1, area='BR', status=1)
         product = StoreProductModel.objects.create(store=store_br,
                                                    product_id='1',
-                                                   product_name=self.test_product_sku,
+                                                   product_name='test',
                                                    product_status='NORMAL',
-                                                   product_sku='L-MJX-DZSB-020',
+                                                   product_sku=self.test_sku,
                                                    image_url='https://cf.shopee.com.br/file/4295f281893d835edb009320f7fceed1',
                                                    category_id=101034,
                                                    brand_id=0,
@@ -120,7 +124,8 @@ class TestClass(TestCase):
             creater=product.creater,
             product=product,
             price=1.0,
-            url='123'
+            url='123',
+            supplier_name='test_supplier',
         )
         return product
 

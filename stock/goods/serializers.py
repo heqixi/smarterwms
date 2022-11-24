@@ -31,39 +31,6 @@ class StockGetSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
 
-# class GoodsAsnListGetSerializer(serializers.ModelSerializer):
-#     create_time = serializers.DateTimeField(
-#         read_only=True, format='%Y-%m-%d %H:%M:%S')
-#     update_time = serializers.DateTimeField(
-#         read_only=True, format='%Y-%m-%d %H:%M:%S')
-#
-#     class Meta:
-#         model = AsnListModel
-#         exclude = ['openid', 'is_delete', ]
-#         read_only_fields = ['id', 'openid', ]
-
-
-# class GoodsAsnDetailGetSerializer(serializers.ModelSerializer):
-#     create_time = serializers.DateTimeField(
-#         read_only=True, format='%Y-%m-%d %H:%M:%S')
-#     update_time = serializers.DateTimeField(
-#         read_only=True, format='%Y-%m-%d %H:%M:%S')
-#
-#     def get_fields(self):
-#         fields = super().get_fields()
-#         asn_param = self.context['request'].query_params.get(
-#             'asn_details', None)
-#         if asn_param:
-#             asn = GoodsAsnListGetSerializer()
-#             fields['asn'] = asn
-#         return fields
-#
-#     class Meta:
-#         model = AsnDetailModel
-#         exclude = ['openid', 'is_delete']
-#         read_only_fields = ['id', 'openid']
-
-
 class GoodsGetSerializer(serializers.ModelSerializer):
     stocks = serializers.SerializerMethodField('get_stocks')
 
@@ -117,18 +84,32 @@ class GoodsGetSerializer(serializers.ModelSerializer):
             return StockGetSerializer(source='goods_stock', context={'request': self.context['request']}, many=True,
                                       required=False).data
 
+    def get_group(self, goods: ListModel):
+        groups = goods.goods_group.all()
+        return [
+            {
+                'id': group.id,
+                'name': group.name,
+                'goods': [
+                    {
+                        'id': group_goods.id,
+                        'goods_code': group_goods.goods_code,
+                        'goods_image': group_goods.goods_image,
+                        'goods_name': group_goods.goods_name
+                    }
+                    for group_goods in group.goods.all()
+                ]
+            } for group in groups]
+
     def get_fields(self):
         fields = super().get_fields()
-        asn_param = self.context['request'].query_params.get('asn_details', None)
         tags_param = self.context['request'].query_params.get('tags', None)
-        if asn_param:
-            # TODO GOODS_DEPENDENCES
-            raise Exception('Improper dependences')
-            # asn_details = GoodsAsnDetailGetSerializer(source='goods_asn_detail', many=True, required=False)
-            # fields['asn_details'] = asn_details
+        group_param = self.context['request'].query_params.get('group', None)
         if tags_param:
             tags = GoodsTagsGetSerialier(source='goods_tags', many=True, required=False)
             fields['tags'] = tags
+        if group_param:
+            fields['group'] = serializers.SerializerMethodField('get_group')
         return fields
 
     class Meta:

@@ -6,8 +6,7 @@ from stock.models import StockRecord
 
 from stock.gRpc.client.stock_service_client import StockServiceClient as StockClient, Stock
 
-from stock.gRpc.client.stock_service_client import UpdateRequest as StockUpdateReq,\
-    CreateRequest as StockCreateReq, BackStockReq
+from stock.gRpc.client.stock_service_client import UpdateRequest as StockUpdateReq, BackStockReq
 
 logger = logging.getLogger()
 
@@ -201,6 +200,29 @@ class StockService(object):
             stock.save()
             return stock
         raise Exception('Update stock goods fail, code:%s, msg: %s', res.code, res.msg)
+
+    def force_ship_stock(self, stock_record: StockRecord):
+        """
+        Force ship stock without consume stock on hand, just mark stock_status as SHIP_STOCK
+        Case 1: if stock had shipped, may have consumed stock_on_hand, need to roll back stock on hand
+        Case 2: if stock is reserved, just update stock_status as Ship
+        """
+        if stock_record.stock_status == StockRecord.SHIP_STOCK:
+            # req = BackStockReq(id=stock_record.stock_id, to_reserve_qty=0, to_onhand_qty=stock_record.stock_qty)
+            # if not req.is_valid():
+            #     raise Exception('Force ship stock fail, back stock illegal argument!')
+            # res = StockClient.get_instance().Back(req)
+            # if not res.success:
+            #     raise Exception('Force ship stock fail, bask stock fail, code: %s, msg: %s', res.code, res.msg)
+            #
+            stock_record = self.back_stock(stock_record, to_reserve_qty=0, to_onhand_qty=stock_record.stock_qty)
+        res = StockClient.get_instance().Update(StockUpdateReq(id=stock_record.stock_id, stock_status=StockRecord.SHIP_STOCK))
+        if res.success:
+            stock_record.stock_status = StockRecord.SHIP_STOCK
+            stock_record.save()
+            return stock_record
+        else:
+            raise Exception('Force ship stock fail, code: %s, msg: %s', res.code, res.msg)
 
     def delete_stock(self, stock: StockRecord):
         """

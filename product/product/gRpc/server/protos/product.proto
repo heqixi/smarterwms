@@ -28,6 +28,15 @@ message Specification {
     repeated ProductOption options = 5;
 }
 
+message SupplierInfo {
+    int32 id = 1;
+    string url = 2;
+    float logistics_costs = 3;
+    int32 min_purchase_num = 4;
+    int32 delivery_days = 5;
+    string supplier_name = 6;
+}
+
 enum ProductStatus {
     EDIT = 0;
     PUBLISH_READY = 1;
@@ -67,6 +76,7 @@ message ProductExtra {
     repeated string publish_id = 3;
     repeated ProductModel models = 4;
     repeated ProductMedia media = 5;
+    SupplierInfo supplierInfo = 6;
 }
 
 message ProductDetails {
@@ -80,6 +90,7 @@ message FieldSelector {
     bool publish_id = 3;
     bool models = 4;
     bool media = 5;
+    bool supplierInfo = 6;
 }
 
 message ProductListRequest {

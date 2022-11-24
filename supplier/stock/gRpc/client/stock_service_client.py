@@ -196,7 +196,7 @@ class StockServiceClient(object):
     def __init__(self, create_key):
         assert (create_key == StockServiceClient.__create_key),\
             "Stock Service is single instance, please use GlobalProductService.get_instance()"
-        channel = grpc.insecure_channel('localhost:50052')
+        channel = grpc.insecure_channel('192.168.2.75:50051')
         self.service_stub = stock_pb2_grpc.StockControllerStub(channel)
 
     @classmethod
@@ -243,7 +243,6 @@ class StockServiceClient(object):
             raise Exception('Illegal query request')
         stock_stream = self.service_stub.Query(req.to_message())
         return stock_stream
-
 
 
 

@@ -51,7 +51,6 @@ export default {
       table_list: [],
       rowKey: 'id',
       search_task: undefined,
-      supplier_list: [],
       filter: '',
       token: LocalStorage.getItem('openid')
     }
@@ -103,7 +102,7 @@ export default {
       _this.loading = true
 
       let path = _this.pathname +
-        '?purchases=details&supplier=details&goods_stocks=aggregation&variants=details&order=stock__shortage__desc'
+        '?&goods_stocks=aggregation&order=stock__shortage__desc'
       if (_this.path) {
         path = _this.path
       }
@@ -117,33 +116,17 @@ export default {
       getauth(path, {})
         .then(res => {
           console.log('get goods with purchase info ', res)
+          _this.pathname_previous = baseurl + res.pre_path
+          _this.pathname_next = baseurl + res.next_path
+          console.log('_this. pathname next ', _this.pathname_next)
           _this.numRows = res.count
           _this.table_list = res.results
           _this.table_list.sort(_this.sortFn)
           _this.table_list.forEach(goods => {
             goods.purchase_num = Math.max(goods.stocks.stock_reserve - goods.stocks.stock_onhand - goods.stocks.stock_purchased, 0)
           })
-          _this.supplier_list = res.supplier_list
-          _this.pathname_previous = res.previous
-          _this.pathname_next = res.next
           _this.loading = false
-          // setTimeout(() => {
-          //   if (_this.defaultSelected) {
-          //     console.log('add default select ', _this.defaultSelected)
-          //     _this.$refs.table.addSelected(_this.defaultSelected)
-          //   } else {
-          //     console.log('no need add default select ')
-          //   }
-          // }, 100)
         })
-        // .catch(err => {
-        //   _this.loading = false
-        //   _this.$q.notify({
-        //     message: '出错了，请重试',
-        //     icon: 'close',
-        //     color: 'negative'
-        //   })
-        // })
     },
     getSearchList (searchTerm) {
       const _this = this
@@ -209,7 +192,7 @@ export default {
     },
     filteredRows (goods, searchTerm) {
       const codeMatch = goods.goods_code.indexOf(searchTerm) > -1
-      const nameMatch = goods.goods_name.indexOf(searchTerm) > -1
+      const nameMatch = goods.goods_name && goods.goods_name.indexOf(searchTerm) > -1
       return codeMatch || nameMatch
     },
     getListPrevious () {
@@ -219,8 +202,8 @@ export default {
         getauth(_this.pathname_previous, {})
           .then(res => {
             _this.table_list = res.results
-            _this.pathname_previous = res.previous
-            _this.pathname_next = res.next
+            _this.pathname_previous = baseurl + res.next_path
+            _this.pathname_next = baseurl + res.pre_path
             _this.loading = false
           })
           .catch(err => {
@@ -262,8 +245,8 @@ export default {
                   _this.table_list.push(goods)
                 }
               })
-              _this.pathname_previous = res.previous
-              _this.pathname_next = res.next
+              _this.pathname_previous = baseurl + res.pre_path
+              _this.pathname_next = baseurl + res.next_path
               _this.loading = false
               resolve('next page')
             })

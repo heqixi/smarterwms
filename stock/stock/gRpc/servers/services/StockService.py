@@ -1,4 +1,4 @@
-
+from django.db import transaction
 from google.protobuf import empty_pb2
 
 from stock.models import StockListModel
@@ -19,6 +19,7 @@ class StockService(generics.ModelService):
     queryset = StockListModel.objects.all().order_by('-id')
     serializer_class = StockSerializer
 
+    @transaction.atomic
     def Create(self, request, context):
         print('create stock ', request)
         openid = 'd8ee5135188748805e32f3db8e64fbdf'
@@ -64,7 +65,9 @@ class StockService(generics.ModelService):
         stock.save()
         return Success(stock).to_proto()
 
+    @transaction.atomic
     def Update(self, request, context):
+        print('Update stock ', request)
         stock_id = request.id
         if not stock_id:
             return MissingParametersError('Missing stock id').to_proto()
@@ -95,6 +98,7 @@ class StockService(generics.ModelService):
         else:
             return Success(stock_obj).to_proto()
 
+    @transaction.atomic
     def Reserve(self, request, context):
         print('reserve stock')
         stock_qty = request.stock_qty
@@ -114,6 +118,7 @@ class StockService(generics.ModelService):
         else:
             return Success(stock).to_proto()
 
+    @transaction.atomic
     def Back(self, request, context):
         instance = self.get_object()
         if not instance:
@@ -130,6 +135,7 @@ class StockService(generics.ModelService):
         else:
             return Success(instance).to_proto()
 
+    @transaction.atomic
     def Ship(self, request, context):
         instance = self.get_object()
         if not instance:
@@ -148,6 +154,7 @@ class StockService(generics.ModelService):
         instance.save()
         return Success(instance).to_proto()
 
+    @transaction.atomic
     def Destroy(self, request, context):
         stock_id = request.id
         if stock_id is None:

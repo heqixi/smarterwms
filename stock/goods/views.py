@@ -21,7 +21,6 @@ from rest_framework.response import Response
 
 import logging
 
-from .services.goodshelper import GoodsHelper
 
 logger = logging.getLogger()
 
@@ -151,18 +150,11 @@ class APIViewSet(viewsets.ModelViewSet):
         if exclude and len(exclude) > 0:
             queryset = queryset.exclude(id__in=exclude)
         if id_in_params and len(id_in_params) > 0:
-            queryset = queryset.annotate(contain_=Case(When(id__in=id_in_params, then=0), default=1, output_field=IntegerField())).order_by('contain_')
+            queryset = queryset.filter(id__in=id_in_params)
         if search_params:
             search_term = search_params[0]  # 暂时只支持一个搜素条件
             queryset = queryset.filter(
                 Q(goods_code__contains=search_term) | Q(goods_name__contains=search_term)).distinct()
-        if filter_params:
-            for field, condition in self.parse_filter(filter_params):
-                if field == 'stock':
-                    queryset = queryset.annotate(
-                        stock_count=Count('goods_stock'))
-                    if condition == 'notEmpty':
-                        queryset = queryset.filter(stock_count__gt=0)
 
         if stock_param == 'aggregation':
             queryset = queryset.annotate(
@@ -179,12 +171,20 @@ class APIViewSet(viewsets.ModelViewSet):
                 stock_reserve=Coalesce(Sum('goods_stock__stock_qty', filter=Q(goods_stock__stock_status=11)), 0))
             queryset = queryset.annotate(
                 stock_ship=Coalesce(Sum('goods_stock__stock_qty', filter=Q(goods_stock__stock_status=12)), 0))
-
+            queryset = queryset.annotate(stock_shortage=F('stock_reserve') - F('stock_onhand') - F('stock_purchased'))
+        if filter_params:
+            for field, condition in self.parse_filter(filter_params):
+                if field == 'stock':
+                    queryset = queryset.annotate(
+                        stock_count=Count('goods_stock'))
+                    if condition == 'notEmpty':
+                        queryset = queryset.filter(stock_count__gt=0)
+                    if condition == 'shortage':
+                        queryset = queryset.filter(stock_shortage__gt=0)
         if order_params:
             for field, by, ordering in self.parse_order(order_params):
                 if field == 'stock':
                     if by == 'shortage':
-                        queryset = queryset.annotate(stock_shortage=F('stock_reserve') - F('stock_onhand') - F('stock_purchased'))
                         if ordering == 'desc':
                             queryset = queryset.order_by('-stock_shortage')
                         else:
@@ -193,19 +193,11 @@ class APIViewSet(viewsets.ModelViewSet):
 
     @profile('GoodsView:list')
     def list(self, request):
-        openid = self.request.META.get('HTTP_TOKEN')
         queryset = self.get_queryset()
         page = self.paginate_queryset(queryset)
-        print('get goods list, ', openid, queryset.count())
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             data = serializer.data
-            purchase_param = self.request.query_params.get('purchases', None)
-            if purchase_param:
-                raise Exception('Improper dependencies')
-            purchase_param = self.request.query_params.get('purchases', None)
-            if purchase_param:
-                GoodsHelper.get_goods_purchase(queryset, data, self.request)
             response = self.get_paginated_response(data)
             return response
         serializer = self.get_serializer(queryset, many=True)

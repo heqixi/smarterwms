@@ -131,6 +131,7 @@ class StoreGlobalProduct(viewsets.ModelViewSet):
 
     def get_queryset(self):
         params = spg.parse_params(self.request)
+        print('get query set')
         query_type = params.get('type')
         ordering = params.get('ordering')
         merchant_id = params.get('merchant_id')

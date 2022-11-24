@@ -81,7 +81,7 @@ axiosInstanceAuth.interceptors.response.use(
     }
     if (response.data.results) {
       var sslcheck = baseurl.split(':')
-      if (response.data.next !== null) {
+      if (response.data.next) {
         if (sslcheck.length === 2) {
           var nextlinkcheck = (response.data.next).toString().split(sslcheck[1])
           response.data.next = nextlinkcheck[1]
@@ -92,7 +92,7 @@ axiosInstanceAuth.interceptors.response.use(
       } else {
         response.data.next = null
       }
-      if (response.data.previous !== null) {
+      if (response.data.previous) {
         if (sslcheck.length === 2) {
           var previouslinkcheck = (response.data.previous).toString().split(sslcheck[1])
           response.data.previous = previouslinkcheck[1]

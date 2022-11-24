@@ -355,12 +355,14 @@ class ProductDetails(MessageEncoder, Verifiable):
 
 class FieldSelector(MessageEncoder):
 
-    def __init__(self, specification=False, option=False, publish_id=False, models=False, media=False):
+    def __init__(self, specification=False, option=False, publish_id=False, models=False, media=False,
+                 supplier_info=False):
         self.specification = specification
         self.option = option
         self.publish_id = publish_id
         self.models = models
         self.media = media
+        self.supplierInfo = supplier_info
 
     def to_message(self):
         return product_pb2.FieldSelector(
@@ -368,7 +370,8 @@ class FieldSelector(MessageEncoder):
             option=self.option,
             publish_id=self.publish_id,
             models=self.models,
-            media=self.media
+            media=self.media,
+            supplierInfo=self.supplierInfo
         )
 
 

@@ -1,4 +1,4 @@
-
+import json
 from collections import OrderedDict
 
 from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination
@@ -105,11 +105,23 @@ class GoodsCursorPagination(LimitOffsetPagination):
     ordering ='-create_time'
 
     def get_paginated_response(self, data):
+        from urllib.parse import urlparse
+        print('get paginated response ', self.get_next_link(), self.get_previous_link())
+        next_path = None
+        if self.get_next_link():
+            parsed_uri = urlparse(self.get_next_link())
+            next_path = '{uri.path}?{uri.query}'.format(uri=parsed_uri)
+        pre_path = None
+        if self.get_previous_link():
+            parsed_uri = urlparse(self.get_previous_link())
+            pre_path = '{uri.path}?{uri.query}'.format(uri=parsed_uri)
         res = Response(OrderedDict([
             ('count', self.count),
-            ('next', self.get_next_link()),
-            ('previous', self.get_previous_link()),
+            ('next', next_path),
+            ('next_path', next_path),
+            ('pre_path', pre_path),
             ('results', data)
         ]))
+        print('get_paginated_response, count ', res.data['next'])
         return res
 

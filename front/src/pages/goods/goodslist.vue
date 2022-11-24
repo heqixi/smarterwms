@@ -58,7 +58,7 @@ export default {
       openid: '',
       login_name: '',
       authin: '0',
-      pathname: 'product/',
+      pathname: 'store/global/',
       pathname_previous: '',
       pathname_next: '',
       separator: 'cell',
@@ -131,7 +131,7 @@ export default {
           label: '图片',
           align: 'center',
           type: 'image',
-          field: 'image',
+          field: 'image_url',
           style: 'width:100px'
         },
         {
@@ -139,7 +139,7 @@ export default {
           required: true,
           label: this.$t('goods.view_goodslist.goods_code'),
           align: 'center',
-          field: 'sku',
+          field: 'product_sku',
           type: 'text',
           style: {
             width: '100px',
@@ -152,16 +152,16 @@ export default {
           label: this.$t('goods.view_goodslist.goods_name'),
           align: 'center',
           type: 'longText',
-          field: 'name',
+          field: 'product_name',
           style: {
             width: '200px',
             whiteSpace: 'normal'
           }
         },
         {
-          name: 'published',
+          name: 'store_prices',
           label: '店铺信息',
-          field: 'publish',
+          field: 'store_prices',
           type: 'table',
           rowHeight: 20,
           keepExpand: true,
@@ -178,7 +178,7 @@ export default {
             {
               name: 'original_price',
               label: '原价',
-              field: 'price_info',
+              field: 'self',
               class: 'col-2 text-center',
               style: { width: '80px', maxWidth: '80px', whiteSpace: 'normal', fontSize: '8px' },
               fieldMap: priceInfo => { return _this.productPriceInfo2Str(priceInfo.original_price) }
@@ -186,7 +186,7 @@ export default {
             {
               name: 'current_price',
               label: '售价',
-              field: 'price_info',
+              field: 'self',
               class: 'col-3 text-center',
               style: { width: '120px', whiteSpace: 'normal', fontSize: '8px' },
               fieldMap: priceInfo => { return _this.productPriceInfo2Str(priceInfo.current_price) }
@@ -202,7 +202,7 @@ export default {
         {
           name: 'status',
           label: '状态',
-          field: 'status',
+          field: 'product_status',
           align: 'center',
           style: 'width:50px',
           type: 'text',
@@ -634,7 +634,7 @@ export default {
       var _this = this
       _this.loading = true
       getauth(
-        _this.pathname + '?tags=details&publish=true&shopee_store=true&status=PB',
+        _this.pathname + '?type=1&product_status=NORMAL&store_prices=true',
         {}
       ).then(res => {
         console.log('get product List ', res.results, res.tags_list)

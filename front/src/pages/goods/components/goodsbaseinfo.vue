@@ -150,12 +150,9 @@ export default {
         })
         return
       }
-      console.log('auto generate sku for categories ', this.category)
       const categoryName = this.category.original_category_name.replaceAll(' ', '')
       const date = new Date()
       this.productBaseInfo.sku = categoryName + '_' + date.getFullYear() + (date.getMonth() + 1) + date.getDate() + '_' + uuidGenerator(4, 32)
-      this.saveSku()
-      console.log('auto generate sku for category ', categoryName)
     },
     uploadIt () {
       console.log('upload it')
@@ -228,7 +225,7 @@ export default {
       var _this = this
       this.getKeyWordsFilterTasks = setTimeout(() => {
         console.log('start get key words filter')
-        getauth('product/keyword_filter?shop_type=shopee', {}).then(keyWords => {
+        getauth('shopee/publish/product/keyword_filter', {}).then(keyWords => {
           _this.keyWordsFilter = keyWords
           _this.getKeyWordsFilterTasks = undefined
         })

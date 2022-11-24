@@ -9,7 +9,8 @@ from globalproduct.gRpc.client.types.global_product import QueryRequest, Product
     ProductResponse, FieldSelector
 from globalproduct.models import GlobalProductRelations
 from store.models import StoreProductModel, StoreProductOptionModel, StoreProductOptionItemModel, \
-    StoreProductVariantModel, StoreProductVariantStock, StoreProductPriceInfoModel, StoreProductMedia
+    StoreProductVariantModel, StoreProductVariantStock, StoreProductPriceInfoModel, StoreProductMedia, \
+    ProductSupplierInfo
 
 logger = logging.getLogger()
 
@@ -59,32 +60,33 @@ class ProductServiceClient(object):
         return ProductResponse(res)
 
     def create_from_shopee(self, shopee_product: dict):
-        global_product_id = None
-        global_product_relation = GlobalProductRelations.objects.filter(product_id=shopee_product['id']).first()
-        if global_product_relation:
-            global_product_id = global_product_relation.global_product_id
-            # store_product = StoreProductModel.objects.get(id=shopee_product['id'])
-            # sync = False
-            # for shop_product in store_product.shop_products.all():
-            #     shop_product_relation = GlobalProductRelations.objects.filter(
-            #         product_id=shop_product.id).first()
-            #     if not shop_product_relation:
-            #         sync = True
-            #         break
-            # if not sync:
-            #     # TODO
-            #     logger.info('global relations exists, no need to sync %s ', shopee_product['id'])
-            #     return True
-        product_details = ProductDetails.from_shopee_product(shopee_product, global_product_id)
-        if product_details.is_valid(True):
-            message = self.service_stub.Create(product_details.to_message())
-            res = ProductResponse(message)
-            if res.success:
-                store_product = StoreProductModel.objects.get(id=shopee_product['id'])
-                self._bind_global_product(store_product, res.product.id)
-            else:
-                raise Exception('create product from shopee fail!')
-            return res.product
+        pass
+        # global_product_id = None
+        # global_product_relation = GlobalProductRelations.objects.filter(product_id=shopee_product['id']).first()
+        # if global_product_relation:
+        #     global_product_id = global_product_relation.global_product_id
+        #     # store_product = StoreProductModel.objects.get(id=shopee_product['id'])
+        #     # sync = False
+        #     # for shop_product in store_product.shop_products.all():
+        #     #     shop_product_relation = GlobalProductRelations.objects.filter(
+        #     #         product_id=shop_product.id).first()
+        #     #     if not shop_product_relation:
+        #     #         sync = True
+        #     #         break
+        #     # if not sync:
+        #     #     # TODO
+        #     #     logger.info('global relations exists, no need to sync %s ', shopee_product['id'])
+        #     #     return True
+        # product_details = ProductDetails.from_shopee_product(shopee_product, global_product_id)
+        # if product_details.is_valid(True):
+        #     message = self.service_stub.Create(product_details.to_message())
+        #     res = ProductResponse(message)
+        #     if res.success:
+        #         store_product = StoreProductModel.objects.get(id=shopee_product['id'])
+        #         self._bind_global_product(store_product, res.product.id)
+        #     else:
+        #         raise Exception('create product from shopee fail!')
+        #     return res.product
 
     def get_by_shopee_product(self, shopee_product: StoreProductModel, ):
         global_product_relations = GlobalProductRelations.objects.filter(product=shopee_product).first()
@@ -101,7 +103,7 @@ class ProductServiceClient(object):
     def _bind_global_product(self, store_product: StoreProductModel, global_product_id):
         global_product_relations = GlobalProductRelations.objects.filter(product=store_product).first()
         if not global_product_relations:
-            global_product_relation = GlobalProductRelations.objects.create(
+            GlobalProductRelations.objects.create(
                 openid=store_product.openid,
                 creater=store_product.creater,
                 global_product_id=global_product_id,
@@ -113,10 +115,11 @@ class ProductServiceClient(object):
 
     @transaction.atomic
     def create_from_global_product(self, global_product_id, store):
-        field_selector = FieldSelector(specification=True, option=True, models=True, media=True)
+        field_selector = FieldSelector(specification=True, option=True, models=True, media=True, supplier_info=True)
         req = RetrieveRequest(id=global_product_id, field_selector=field_selector)
         res = self.retrieve(req)
         if not res.success:
+            print('retrieve product fail ')
             raise Exception('Fail to retrive global product of id %s, code: %s, msg: %s' % (global_product_id, res.code, res.msg))
         else:
             logger.info('create from global product success')
@@ -144,7 +147,31 @@ class ProductServiceClient(object):
             gp_models = gp_extra.models
             if gp_models:
                 self._create_models_from_gp(store_product, gp_models)
+            gp_supplier_info = gp_extra.supplierInfo
+            if gp_supplier_info:
+                self._create_supplier_info_from_gp(store_product, gp_supplier_info)
             return store_product
+
+    def _create_supplier_info_from_gp(self, product, supplier_info):
+        supplier_info_obj = ProductSupplierInfo.objects.filter(product_id=product.id).first()
+        if not supplier_info_obj:
+            ProductSupplierInfo.objects.create(
+                openid=product.openid,
+                creater=product.creater,
+                product=product,
+                url=supplier_info.url,
+                logistics_costs=supplier_info.logistics_costs,
+                min_purchase_num=supplier_info.min_purchase_num,
+                delivery_days=supplier_info.delivery_days,
+                supplier_name=supplier_info.supplier_name
+            )
+        else:
+            supplier_info_obj.url = supplier_info.url
+            supplier_info_obj.logistics_costs = supplier_info.logistics_costs
+            supplier_info_obj.min_purchase_num = supplier_info.min_purchase_num
+            supplier_info_obj.delivery_days = supplier_info.delivery_days
+            supplier_info_obj.supplier_name = supplier_info.supplier_name
+            supplier_info_obj.save()
 
     def _create_store_product_from_gp(self, product, store):
         store_product = StoreProductModel.objects.create(

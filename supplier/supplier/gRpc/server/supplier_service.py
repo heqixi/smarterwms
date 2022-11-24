@@ -11,7 +11,8 @@ class SupplierService(generics.ModelService):
 
     @transaction.atomic
     def CreatePurchasePlan(self, request, context):
-        openid = 'c240c14ea66ef48bc3c5645735a715af'
+        print('create purcase plan ', request)
+        openid = 'd8ee5135188748805e32f3db8e64fbdf'
         creater = 'admin'
         supplier = request.supplier
         if supplier.id:

@@ -230,7 +230,6 @@ class PurchasePlanView(viewsets.ModelViewSet):
             return None
 
     def get_queryset(self):
-        print('PurchasePlanView get query set ')
         openid = self.request.META.get('HTTP_TOKEN')
         if not openid:
             raise APIException('Please offer openid')
@@ -240,7 +239,7 @@ class PurchasePlanView(viewsets.ModelViewSet):
             queryset = queryset.filter(id=id)
         goods = self.request.query_params.getlist('goods', None)
         if goods:
-            queryset = queryset.prefetch_related('goods_settings').filter(goods_settengs__goods__in=goods) # goods_settengs是错别字，先别修改
+            queryset = queryset.prefetch_related('goods_settings').filter(goods_settings__goods__in=goods) # goods_settengs是错别字，先别修改
         return queryset
 
     def get_serializer_class(self):
@@ -283,7 +282,7 @@ class PurchasePlanView(viewsets.ModelViewSet):
         if goods_ids and data.get('add', None):
             for goods_id in goods_ids:
                 # goods = Goods.objects.get(id=goods_id)
-                exist_settings = PurchasePlanGoodsSetting.objects.filter(goods_id=goods_id, openid=qs.openid).all()
+                exist_settings = PurchasePlanGoodsSetting.objects.filter(goods=goods_id, openid=qs.openid).all()
                 max_level = -1
                 for exist_setting in exist_settings:
                     max_level = max(exist_setting.level, max_level)
@@ -364,3 +363,13 @@ class PurchasePlanView(viewsets.ModelViewSet):
             qs.save()
             serializer = PurchasePlanSerializer(qs)
             return Response({"status": 200, "data": serializer.data}, status=200, headers=self.get_success_headers(""))
+
+    def get_goods(self, request, *args, **kwargs):
+        purchase_id = self.request.query_params.get('id', None)
+        if not purchase_id:
+            raise APIException('Missing purchase id')
+        purchase_settings = PurchasePlanGoodsSetting.objects.filter(plan_id=purchase_id)
+        res = []
+        for setting in purchase_settings.all():
+            res.append(setting.goods)
+        return Response(res, status=200)

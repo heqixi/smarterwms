@@ -415,13 +415,17 @@ class ProductHelper:
                 url=supplier_info.get('url', None),
                 logistics_costs=supplier_info.get('logistics_costs', 0),
                 min_purchase_num=supplier_info.get('min_purchase_num', 1),
-                supplier_name=supplier_info.get('supplier_name', None)
+                supplier_name=supplier_info.get('supplier_name', None),
+                delivery_days=supplier_info.get('delivery_days', 3),
+                price=supplier_info.get('price', None)
             )
         else:
             product_logistics.url = supplier_info.get('url', product_logistics.url)
             product_logistics.logistics_costs = supplier_info.get('logistics_costs', product_logistics.logistics_costs)
             product_logistics.min_purchase_num = supplier_info.get('min_purchase_num', product_logistics.min_purchase_num)
             product_logistics.supplier_name = supplier_info.get('supplier_name', product_logistics.supplier_name)
+            product_logistics.delivery_days = supplier_info.get('delivery_days', product_logistics.delivery_days)
+            product_logistics.price = supplier_info.get('price', product_logistics.price)
             product_logistics.save()
         return product_logistics
 

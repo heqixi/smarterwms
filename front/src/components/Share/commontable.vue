@@ -506,7 +506,6 @@ export default {
   },
   watch: {
     numRows: function (val) {
-      console.log('num Rows change ')
       this.pagination.rowsNumber = val
     },
     testDynamicPag: function (val) {

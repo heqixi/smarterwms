@@ -864,7 +864,6 @@ export default {
       this.numRows = response.count
       this.pathname_next = response.next
       this.loading = false
-      console.log('get list res ', response)
     }
   },
   created () {

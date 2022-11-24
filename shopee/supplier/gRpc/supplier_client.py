@@ -5,6 +5,10 @@ import grpc
 from base.gRpc.types.base import ProtoType
 from supplier.gRpc.protos import supplier_pb2, supplier_pb2_grpc
 
+import logging
+
+logger = logging.getLogger()
+
 
 class Supplier(ProtoType):
 
@@ -19,7 +23,10 @@ class Supplier(ProtoType):
         super(Supplier, self).__init__(**kwargs)
 
     def is_valid(self):
-        return self.id and self.id > 0 or self.is_not_empty(self.supplier_name)
+        is_valid = (self.id and self.id > 0) or self.is_not_empty(self.supplier_name)
+        if not is_valid:
+            raise Exception('Invalid supplier !')
+        return is_valid
 
     def from_message(self, *args):
         pass
@@ -74,7 +81,7 @@ class SupplierClient(object):
     def __init__(self, create_key):
         assert (create_key == SupplierClient.__create_key), \
             "Stock Service is single instance, please use SupplierClient.get_instance()"
-        channel = grpc.insecure_channel('192.168.31.237:50052')
+        channel = grpc.insecure_channel('192.168.2.75:50052')
         self.service_stub = supplier_pb2_grpc.SupplierControllerStub(channel)
 
     @classmethod
@@ -89,5 +96,6 @@ class SupplierClient(object):
 
     def create_purchase_plan(self, req: CreatePurchasePlanReq):
         if not req.is_valid():
+            logger.error('create purchase plan, req ', req.price, req.url, req.image_url, req.goods)
             raise Exception('Invalid req')
         return self.service_stub.CreatePurchasePlan(req.to_message())

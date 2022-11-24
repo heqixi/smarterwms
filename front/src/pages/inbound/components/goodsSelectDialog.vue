@@ -1,13 +1,14 @@
 <template>
   <div>
     <q-dialog ref="dialog">
-      <q-card>
+      <q-card style="width:1000px;max-width:1200px">
         <goods-search-dialog
           :columns="columns"
           :topButtons="topButtons"
           :goods="goods"
+          :path="path"
+          :hideSearch="hideSearch"
           rowsPerPage="200"
-          hideSearch="true"
           multiple-select="true"
         />
       </q-card>
@@ -68,7 +69,9 @@ export default {
     }
   },
   props: {
-    goods: Array
+    goods: Array,
+    hideSearch: String,
+    path: String
   },
   emits: [
     // REQUIRED

@@ -78,6 +78,11 @@ class GlobalProductView(viewsets.ModelViewSet):
         product_json = StoreShopProductDetailSerializer(store_product).data
         return Response(product_json, status=200)
 
+    def get_keyword_filter(self, request):
+        from django.conf import settings
+        keyword_filter = settings.SHOPEE.get('keyword_filter')
+        return Response(keyword_filter, status=200)
+
     def claim_global_product(self, request, *args, **kwargs):
         data = request.data
         print('claim product data ', data)

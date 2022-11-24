@@ -1,8 +1,14 @@
-import {PHASE_TYPE, GET_GOODS_TO_PURCHASE,GET_GOODS_WAITING, GET_GOODS_TO_SORT, GET_GOODS_IN_STOCK, ANS_PATH} from "./types";
+import {
+  ANS_PATH,
+  GET_GOODS_IN_STOCK,
+  GET_GOODS_TO_PURCHASE,
+  GET_GOODS_TO_SORT,
+  GET_GOODS_WAITING,
+  PHASE_TYPE
+} from './types'
 
-import {SessionStorage, LocalStorage } from "quasar";
-import {getauth, postauth, putauth, deleteauth} from "boot/axios_request";
-
+import { LocalStorage } from 'quasar'
+import { getauth, postauth } from 'boot/axios_request'
 
 const getNextPhase = function (currentPhase) {
   if (PHASE_TYPE.purchase == currentPhase) {
@@ -13,6 +19,35 @@ const getNextPhase = function (currentPhase) {
     return PHASE_TYPE.stock;
   }
   return undefined;
+}
+
+const getGoodsDetails = function (asnList) {
+  const goodsList = []
+  asnList.forEach(asn => {
+    asn.details.forEach(detail => {
+      goodsList.push(detail.goods)
+    })
+  })
+  return new Promise((resolve, reject) => {
+    if (goodsList.length > 0) {
+      console.log('get goods detail', goodsList)
+      const queryParams = goodsList.join('&id_in=')
+      getauth('goods/?goods_stocks=aggregation&id_in=' + queryParams).then(res => {
+        const goodsDetails = res.results
+        asnList.forEach(asn => {
+          asn.details.forEach(detail => {
+            detail.goods = goodsDetails.find(goods => {
+              return goods.id === detail.goods
+            })
+          })
+        })
+        resolve(asnList)
+      })
+    } else {
+      console.log('no need to get goods detail')
+      resolve(asnList)
+    }
+  })
 }
 
 const getGetterNameByPhase = function(currentPhase) {
@@ -89,5 +124,6 @@ export {
   getGetterNameByPhase,
   aggregateStockQty,
   getStockQty,
-  uuidGenerator
+  uuidGenerator,
+  getGoodsDetails
 }

@@ -62,12 +62,14 @@ class StoreGlobalProductListGetSerializer(serializers.ModelSerializer):
     update_time = serializers.DateTimeField(read_only=True, format='%Y-%m-%d %H:%M:%S')
 
     def get_fields(self):
+        print('get store global fields')
         fields = super().get_fields()
         store_detail = self.context['request'].query_params.get('store_detail', None)
         is_models = self.context['request'].query_params.get('models', None)
         supplier_info = self.context['request'].query_params.get('supplier_info', None)
         product_medias = self.context['request'].query_params.get('product_medias', None)
         option = self.context['request'].query_params.get('options', None)
+        store_prices = self.context['request'].query_params.get('store_prices', None)
         if store_detail:
             store = StoreListGetSerializer()
             fields['store'] = store
@@ -85,10 +87,39 @@ class StoreGlobalProductListGetSerializer(serializers.ModelSerializer):
             option_items = serializers.SerializerMethodField('get_option_items')
             fields['options'] = options
             fields['option_items'] = option_items
+        if store_prices:
+            print('get store global store_prices')
+            fields['store_prices'] = serializers.SerializerMethodField('get_store_prices')
         return fields
+
+    def get_store_prices(self, product: StoreProductModel):
+        store_prices = []
+        for store_product in product.shop_products.all():
+            variant_prices = [(variant_price.original_price, variant_price.current_price) for variant_price in
+                              store_product.product_price_info.all()]
+            if not variant_prices:
+                continue
+            min_original_price = min([original_price for original_price, _ in variant_prices if original_price])
+            max_original_price = max([original_price for original_price, _ in variant_prices if original_price])
+            min_current_price = min([current_price for _, current_price in variant_prices if current_price])
+            max_current_price = max([current_price for _, current_price in variant_prices if current_price])
+            if variant_prices:
+                store_prices.append(
+                    {
+                        'store': {
+                            'id': store_product.store.id,
+                            'name': store_product.store.name
+                        },
+                        'original_price': {'min': min_original_price, 'max': max_original_price},
+                        'current_price': {'min': min_current_price, 'max': max_current_price}
+                    }
+                )
+        return store_prices
 
     def get_supplier_info(self, obj):
         suppler_info = obj.supplier_info.first()
+        if not suppler_info:
+            return None
         return spg.django_model_to_dict(model=suppler_info)
 
     def get_product_medias(self, obj: StoreProductModel):

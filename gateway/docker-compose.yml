@@ -15,7 +15,7 @@ services:
 # 执行数据库迁移
 ######################
   kong-migration:
-    image: kong:latest
+    image: kong:3.0.1-alpine
     command: "kong migrations bootstrap"
     networks: 
       - kong-net
@@ -34,8 +34,8 @@ services:
 # kong gateway
 #####################
   kong:
-    image: kong:latest
-    restart: "no"
+    image: kong:3.0.1-alpine
+    restart: always
     networks:
       - kong-net
     environment:
@@ -66,7 +66,7 @@ services:
     command: "-c prepare -a postgres -u postgresql://kong:kong@kong-database:5432/konga"  #注意是用户名：密码@数据库服务名称：端口
     networks:
       - kong-net
-    restart: "no"
+    restart: on-failure
     links:
       - kong-database
     depends_on:
@@ -75,7 +75,7 @@ services:
 
   konga:
     image: pantsel/konga:latest
-    restart: "no"
+    restart: always
     networks:
       - kong-net
     environment:

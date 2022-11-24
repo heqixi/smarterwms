@@ -1,6 +1,5 @@
 from django.urls import path, re_path
 from . import views
-from .views import PurchasePlanView
 
 urlpatterns = [
 path(r'', views.APIViewSet.as_view({"get": "list", "post": "create"}), name="supplier"),

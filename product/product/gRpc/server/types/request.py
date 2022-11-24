@@ -7,9 +7,9 @@ from base.gRpc.types.base import RequestVerifier, MessageDecoder, MessageEncoder
 from product.gRpc.server.protos import product_pb2
 from base.gRpc.types.base import Verifiable
 from product.gRpc.server.utils import product_to_message, specification_to_message, option_to_message, \
-    not_all_empty, models_to_message, product_media_to_message
+    not_all_empty, models_to_message, product_media_to_message, supplier_info_to_message
 
-from product.models import GlobalProduct, ProductSpecification, ProductOption as ProductOptionModel
+from product.models import GlobalProduct, ProductSpecification, ProductOption as ProductOptionModel, ProductSupplier
 from productmedia.models import ProductMedia
 
 
@@ -533,7 +533,12 @@ class ProductRetrieveSerializer(RequestVerifier, MessageEncoder, MessageDecoder)
             if selector.media:
                 for media in getattr(self.product, GlobalProduct.RelativeFields.PRODUCT_MEDIA).all():
                     _product_media.append(product_media_to_message(media))
-            _extra = product_pb2.ProductExtra(firstSpec=_first_spec, secondSpec=_second_spec, models=_models, media=_product_media)
+            _supplier_info = None
+            if selector.supplierInfo:
+                supplier_obj = ProductSupplier.objects.filter(product_id=self.product.id).first()
+                _supplier_info = supplier_info_to_message(supplier_obj) if supplier_obj else None
+            _extra = product_pb2.ProductExtra(firstSpec=_first_spec, secondSpec=_second_spec, models=_models,
+                                              media=_product_media, supplierInfo=_supplier_info)
         return product_pb2.ProductResponse(code=0, product=_product, extra=_extra)
 
     def save(self, *args):
