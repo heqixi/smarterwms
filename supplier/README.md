@@ -14,9 +14,9 @@
 
 - 愿景：用智能化，去中心化软件系统帮助中小微型实体。
 
-## Shopee 服务介绍以及构建指南
+## Supplier 供应商子服务介绍以及构建指南
 
-此工程是对接Shopee的平台的一个微服务
+此工程是对接smarterwms的平台的一个基础服务，提供供应商管理和库存采购能力
 
 ## 开发环境：
 
@@ -74,12 +74,16 @@ Django默认使用sqlite3作为数据库，如果需要mysql数据库，请在sm
 
 ### 开发服务器运行：
 
-- 开发运行：
+- 运行后端服务，用于处理Http/Https请求：
 
 ~~~python
 daphne -b 0.0.0.0 -p 8008 greaterwms.asgi:application
 ~~~
 
+-运行grpc服务器，接受gprc请求, 参数 --dev 表示在开发环境下运行
+~~~python
+python ./manage.py runserver --dev your_ip:port
+~~~
 
 ## 开发指南：
 
@@ -89,7 +93,7 @@ daphne -b 0.0.0.0 -p 8008 greaterwms.asgi:application
 
 ### 关于数据传输
 
-- 需要在所有的请求头headers里面加入token值，这个值就是用户的数据唯一标识OPENID
+- 需要在所有的Http/Https请求头headers里面加入token值，这个值就是用户的数据唯一标识OPENID
 - 所有的数据传输需要设定content-type为application/json
 
 ### OPENID
